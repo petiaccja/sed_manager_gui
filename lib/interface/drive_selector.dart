@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:sed_manager_gui/interface/select_activity.dart';
-import '../bindings/storage.dart';
+import 'package:sed_manager_gui/interface/activity_launcher.dart';
+import '../bindings/storage_device.dart';
 
-class SelectDrivePage extends StatefulWidget {
-  const SelectDrivePage(this.onFinished, {super.key});
+class DriveSelectorPage extends StatefulWidget {
+  const DriveSelectorPage(this.onFinished, {super.key});
 
   final void Function() onFinished;
 
   @override
-  State<SelectDrivePage> createState() => _SelectDrivePageState();
+  State<DriveSelectorPage> createState() => _DriveSelectorPageState();
 }
 
-class _SelectDrivePageState extends State<SelectDrivePage> {
+class _DriveSelectorPageState extends State<DriveSelectorPage> {
   var devices = enumerateStorageDevices();
 
   @override
@@ -36,7 +36,7 @@ class _SelectDrivePageState extends State<SelectDrivePage> {
         onPressed: () {
           Navigator.of(context).push<void>(
             MaterialPageRoute<void>(
-              builder: (BuildContext context) => SelectActivityPage(device),
+              builder: (BuildContext context) => ActivityLauncherPage(device),
             ),
           );
         },

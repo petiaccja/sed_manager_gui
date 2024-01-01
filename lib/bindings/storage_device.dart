@@ -8,7 +8,7 @@ class StorageDevice {
   StorageDevice(this.path) {
     final api = SEDManagerCAPI();
     final pathNative = path.toNativeUtf8();
-    handle = api.createStorageDevice(pathNative.cast<Char>());
+    handle = api.storageDeviceCreate(pathNative.cast<Char>());
     malloc.free(pathNative);
     if (handle == nullptr) {
       throw SEDException(getLastErrorMessage());
@@ -21,7 +21,7 @@ class StorageDevice {
 
   void dispose() {
     final api = SEDManagerCAPI();
-    api.releaseStorageDevice(handle);
+    api.storageDeviceRelease(handle);
   }
 
   String getName() {
@@ -64,6 +64,6 @@ List<StorageDevice> enumerateStorageDevices() {
     }
     return devices;
   } finally {
-    capi.releaseString(chars.cast());
+    capi.stringRelease(chars.cast());
   }
 }

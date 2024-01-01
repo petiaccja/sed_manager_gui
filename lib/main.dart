@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'interface/select_drive.dart';
+import 'interface/drive_selector.dart';
 import 'dart:ui';
 
 void main() {
@@ -18,7 +18,7 @@ class SEDManagerApp extends StatelessWidget {
             seedColor: const Color.fromARGB(255, 22, 42, 109)),
         useMaterial3: true,
       ),
-      home: SelectDrivePage(() {}),
+      home: DriveSelectorPage(() {}),
     );
   }
 }

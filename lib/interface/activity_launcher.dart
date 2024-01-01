@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/errors.dart';
-import 'package:sed_manager_gui/bindings/sedmanager.dart';
-import 'package:sed_manager_gui/bindings/storage.dart';
-import 'package:sed_manager_gui/interface/edit_tables.dart';
+import 'package:sed_manager_gui/bindings/encrypted_device.dart';
+import 'package:sed_manager_gui/bindings/storage_device.dart';
+import 'package:sed_manager_gui/interface/table_selector.dart';
 import 'package:sed_manager_gui/interface/error_popup.dart';
-import 'unlock.dart';
+import 'unlocker.dart';
 
-class SelectActivityPage extends StatelessWidget {
-  const SelectActivityPage(this.device, {super.key});
+class ActivityLauncherPage extends StatelessWidget {
+  const ActivityLauncherPage(this.device, {super.key});
 
   final StorageDevice device;
 
@@ -22,9 +22,9 @@ class SelectActivityPage extends StatelessWidget {
 
   void launchEditTables(BuildContext context) {
     try {
-      var manager = SEDManager(device);
+      var manager = EncryptedDevice(device);
       launchActivity(
-          context, (BuildContext context) => EditTablesPage(manager));
+          context, (BuildContext context) => TableSelectorPage(manager));
     } on Exception catch (ex) {
       showDialog(
           context: context,
@@ -34,8 +34,8 @@ class SelectActivityPage extends StatelessWidget {
 
   void launchUnlock(BuildContext context) {
     try {
-      var manager = SEDManager(device);
-      launchActivity(context, (BuildContext context) => UnlockPage(manager));
+      var manager = EncryptedDevice(device);
+      launchActivity(context, (BuildContext context) => UnlockerPage(manager));
     } on SEDException catch (ex) {
       showDialog(
           context: context, builder: (context) => ErrorPopupPage(ex.message));

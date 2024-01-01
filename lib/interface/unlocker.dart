@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sed_manager_gui/bindings/sedmanager.dart';
+import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 
-class UnlockPage extends StatefulWidget {
-  const UnlockPage(this.manager, {super.key});
+class UnlockerPage extends StatefulWidget {
+  const UnlockerPage(this.manager, {super.key});
 
-  final SEDManager manager;
+  final EncryptedDevice manager;
 
   @override
-  State<UnlockPage> createState() => _UnlockPageState();
+  State<UnlockerPage> createState() => _UnlockerPageState();
 }
 
-class _UnlockPageState extends State<UnlockPage> {
+class _UnlockerPageState extends State<UnlockerPage> {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final List<String> _items = [];
 

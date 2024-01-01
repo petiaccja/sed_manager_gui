@@ -3,10 +3,13 @@ import 'package:ffi/ffi.dart';
 import 'package:sed_manager_gui/bindings/errors.dart';
 
 const libraryPath =
-    "/home/petiaccja/Programming/SEDManager/build/Debug/lib/libSEDManagerCAPI.so";
+    r"D:\Programming\SEDManager\build\Debug\bin\SEDManagerCAPI.dll";
 
 typedef PChar = Pointer<Char>;
 typedef Handle = Pointer<Void>;
+typedef CallbackVoid = Void Function(Uint32);
+typedef CallbackString = Void Function(Uint32, Pointer<Utf8>);
+typedef CallbackUid = Void Function(Uint32, Uint64);
 
 class SEDManagerCAPI {
   SEDManagerCAPI._privateConstructor();
@@ -26,7 +29,7 @@ class SEDManagerCAPI {
     try {
       return chars.cast<Utf8>().toDartString();
     } finally {
-      releaseString(chars.cast());
+      stringRelease(chars.cast());
     }
   }
 
@@ -42,15 +45,15 @@ class SEDManagerCAPI {
     isLeaf: true,
   );
 
-  final releaseString =
+  final stringRelease =
       dylib.lookupFunction<Void Function(Handle), void Function(Handle)>(
-    "ReleaseString",
+    "String_Release",
     isLeaf: true,
   );
 
-  final createStorageDevice =
+  final storageDeviceCreate =
       dylib.lookupFunction<Handle Function(PChar), Handle Function(PChar)>(
-    "CreateStorageDevice",
+    "StorageDevice_Create",
     isLeaf: true,
   );
 
@@ -66,105 +69,84 @@ class SEDManagerCAPI {
     isLeaf: true,
   );
 
-  final releaseStorageDevice =
+  final storageDeviceRelease =
       dylib.lookupFunction<Void Function(Handle), void Function(Handle)>(
-    "ReleaseStorageDevice",
+    "StorageDevice_Release",
     isLeaf: true,
   );
 
-  final createSEDManager =
+  final encryptedDeviceCreate =
       dylib.lookupFunction<Handle Function(Handle), Handle Function(Handle)>(
-    "CreateSEDManager",
+    "EncryptedDevice_Create",
     isLeaf: true,
   );
 
-  final releaseSEDManager =
+  final encryptedDeviceRelease =
       dylib.lookupFunction<Void Function(Handle), void Function(Handle)>(
-    "ReleaseSEDManager",
+    "EncryptedDevice_Release",
     isLeaf: true,
   );
 
-  final sedManagerStart = dylib.lookupFunction<Bool Function(Handle, Uint64),
-      bool Function(Handle, int)>(
-    "SEDManager_Start",
-    isLeaf: true,
+  final encryptedDeviceLogin = dylib.lookupFunction<
+      Void Function(Handle, Pointer<NativeFunction<CallbackVoid>>, Uint64),
+      void Function(Handle, Pointer<NativeFunction<CallbackVoid>>, int)>(
+    "EncryptedDevice_Login",
+    isLeaf: false,
   );
 
-  final sedManagerEnd =
-      dylib.lookupFunction<Bool Function(Handle), bool Function(Handle)>(
-    "SEDManager_End",
-    isLeaf: true,
+  final encryptedDeviceEnd = dylib.lookupFunction<
+      Void Function(Handle, Pointer<NativeFunction<CallbackVoid>>),
+      void Function(Handle, Pointer<NativeFunction<CallbackVoid>>)>(
+    "EncryptedDevice_End",
+    isLeaf: false,
   );
 
-  final sedManagerFindUid = dylib.lookupFunction<
-      Uint64 Function(Handle, PChar, Uint64), int Function(Handle, PChar, int)>(
-    "SEDManager_FindUID",
-    isLeaf: true,
+  final encryptedDeviceFindName = dylib.lookupFunction<
+      Void Function(
+          Handle, Pointer<NativeFunction<CallbackString>>, Uint64, Uint64),
+      void Function(Handle, Pointer<NativeFunction<CallbackString>>, int, int)>(
+    "EncryptedDevice_FindName",
+    isLeaf: false,
   );
 
-  final sedManagerFindName = dylib.lookupFunction<
-      PChar Function(Handle, Uint64, Uint64), PChar Function(Handle, int, int)>(
-    "SEDManager_FindName",
-    isLeaf: true,
+  final encryptedDeviceFindUid = dylib.lookupFunction<
+      Void Function(
+          Handle, Pointer<NativeFunction<CallbackUid>>, Pointer<Utf8>, Uint64),
+      void Function(
+          Handle, Pointer<NativeFunction<CallbackUid>>, Pointer<Utf8>, int)>(
+    "EncryptedDevice_FindUid",
+    isLeaf: false,
   );
 
-  final createTable = dylib.lookupFunction<Handle Function(Handle, Uint64),
-      Handle Function(Handle, int)>(
-    "CreateTable",
-    isLeaf: true,
+  final encryptedDeviceGetTableRows = dylib.lookupFunction<
+      Void Function(Handle, Pointer<NativeFunction<CallbackUid>>, Uint64),
+      void Function(Handle, Pointer<NativeFunction<CallbackUid>>, int)>(
+    "EncryptedDevice_GetTableRows",
+    isLeaf: false,
   );
 
-  final releaseTable =
-      dylib.lookupFunction<Void Function(Handle), void Function(Handle)>(
-    "ReleaseTable",
-    isLeaf: true,
+  final encryptedDeviceGetTableColumns = dylib.lookupFunction<
+      Void Function(Handle, Pointer<NativeFunction<CallbackString>>, Uint64),
+      void Function(Handle, Pointer<NativeFunction<CallbackString>>, int)>(
+    "EncryptedDevice_GetTableColumns",
+    isLeaf: false,
   );
 
-  final createTableIterator =
-      dylib.lookupFunction<Handle Function(Handle), Handle Function(Handle)>(
-    "CreateTableIterator",
-    isLeaf: true,
+  final encryptedDeviceGetObjectColumn = dylib.lookupFunction<
+      Void Function(Handle, Pointer<NativeFunction<CallbackString>>, Uint64,
+          Uint64, Uint64, Uint32),
+      void Function(
+          Handle, Pointer<NativeFunction<CallbackString>>, int, int, int, int)>(
+    "EncryptedDevice_GetObjectColumn",
+    isLeaf: false,
   );
 
-  final releaseTableIterator =
-      dylib.lookupFunction<Void Function(Handle), void Function(Handle)>(
-    "ReleaseTableIterator",
-    isLeaf: true,
-  );
-
-  final tableIteratorNext =
-      dylib.lookupFunction<Bool Function(Handle), bool Function(Handle)>(
-    "TableIterator_Next",
-    isLeaf: true,
-  );
-
-  final createObject =
-      dylib.lookupFunction<Handle Function(Handle), Handle Function(Handle)>(
-    "CreateObject",
-    isLeaf: true,
-  );
-
-  final releaseObject =
-      dylib.lookupFunction<Void Function(Handle), void Function(Handle)>(
-    "ReleaseObject",
-    isLeaf: true,
-  );
-
-  final objectGetUid =
-      dylib.lookupFunction<Uint64 Function(Handle), int Function(Handle)>(
-    "Object_GetUID",
-    isLeaf: true,
-  );
-
-  final objectGetColumnNames = dylib.lookupFunction<
-      PChar Function(Handle, Size, Size), PChar Function(Handle, int, int)>(
-    "Object_GetColumnNames",
-    isLeaf: true,
-  );
-
-  final objectGetColumnValues = dylib.lookupFunction<
-      PChar Function(Handle, Size, Size), PChar Function(Handle, int, int)>(
-    "Object_GetColumnValues",
-    isLeaf: true,
+  final encryptedDeviceSetObjectColumn = dylib.lookupFunction<
+      Void Function(Handle, Pointer<NativeFunction<CallbackVoid>>, Uint64,
+          Uint64, Uint64, Uint32, Pointer<Utf8>),
+      void Function(Handle, Pointer<NativeFunction<CallbackVoid>>, int, int,
+          int, int, Pointer<Utf8>)>(
+    "EncryptedDevice_SetObjectColumn",
+    isLeaf: false,
   );
 }
