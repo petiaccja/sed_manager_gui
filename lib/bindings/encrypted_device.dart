@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:core';
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:sed_manager_gui/bindings/errors.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
 import 'sedmanager_capi.dart';
+
+typedef UID = int;
 
 class EncryptedDevice {
   static final _capi = SEDManagerCAPI();
@@ -17,13 +18,34 @@ class EncryptedDevice {
     }
   }
 
+  EncryptedDevice.fromHandle(this.handle);
+
   late final Handle handle;
 
   void dispose() {
     _capi.encryptedDeviceRelease(handle);
   }
 
-  Future<void> login(int securityProvider) {
+  static Future<EncryptedDevice> start(StorageDevice storageDevice) {
+    final completer = Completer<EncryptedDevice>();
+
+    late final NativeCallable<CallbackHandle> callable;
+    void callback(int statusCode, Handle result) {
+      if (statusCode != 0) {
+        completer.completeError(SEDException(getLastErrorMessage()));
+      } else {
+        completer.complete(EncryptedDevice.fromHandle(result));
+      }
+      callable.close();
+    }
+
+    callable = NativeCallable<CallbackHandle>.listener(callback);
+    _capi.encryptedDeviceStart(storageDevice.handle, callable.nativeFunction);
+
+    return completer.future;
+  }
+
+  Future<void> login(UID securityProvider) {
     final completer = Completer<void>();
 
     late final NativeCallable<CallbackVoid> callable;
@@ -62,7 +84,7 @@ class EncryptedDevice {
     return completer.future;
   }
 
-  Future<String?> findName(int uid, {int securityProvider = 0}) {
+  Future<String?> findName(UID uid, {UID securityProvider = 0}) {
     final completer = Completer<String?>();
 
     late final NativeCallable<CallbackString> callable;
@@ -86,8 +108,8 @@ class EncryptedDevice {
     return completer.future;
   }
 
-  Future<int?> findUid(String name, {int securityProvider = 0}) {
-    final completer = Completer<int?>();
+  Future<UID?> findUid(String name, {UID securityProvider = 0}) {
+    final completer = Completer<UID?>();
 
     late final NativeCallable<CallbackUid> callable;
     void callback(int statusCode, int result) {
@@ -108,8 +130,8 @@ class EncryptedDevice {
     return completer.future;
   }
 
-  Stream<int> getTableRows(int tableUid) {
-    final controller = StreamController<int>();
+  Stream<UID> getTableRows(UID tableUid) {
+    final controller = StreamController<UID>();
 
     late final NativeCallable<CallbackUid> callable;
     void callback(int statusCode, int result) {
@@ -131,7 +153,7 @@ class EncryptedDevice {
     return controller.stream;
   }
 
-  Stream<String> getTableColumns(int tableUid) {
+  Stream<String> getTableColumns(UID tableUid) {
     final controller = StreamController<String>();
 
     late final NativeCallable<CallbackString> callable;
@@ -156,10 +178,10 @@ class EncryptedDevice {
   }
 
   Future<String> getObjectColumn(
-    int tableUid,
-    int objectUid,
+    UID tableUid,
+    UID objectUid,
     int column, {
-    int securityProvider = 0,
+    UID securityProvider = 0,
   }) {
     final completer = Completer<String>();
 
@@ -185,11 +207,11 @@ class EncryptedDevice {
   }
 
   Future<void> setObjectColumn(
-    int tableUid,
-    int objectUid,
+    UID tableUid,
+    UID objectUid,
     int column,
     String value, {
-    int securityProvider = 0,
+    UID securityProvider = 0,
   }) {
     final completer = Completer<void>();
 

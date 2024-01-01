@@ -1,6 +1,4 @@
 import 'dart:core';
-import 'dart:ffi';
-import 'package:ffi/ffi.dart';
 import 'sedmanager_capi.dart';
 
 String getLastErrorMessage() {

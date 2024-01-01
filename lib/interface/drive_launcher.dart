@@ -2,35 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/interface/activity_launcher.dart';
 import '../bindings/storage_device.dart';
 
-class DriveSelectorPage extends StatefulWidget {
-  const DriveSelectorPage(this.onFinished, {super.key});
+class DriveLauncherPage extends StatefulWidget {
+  const DriveLauncherPage(this.onFinished, {super.key});
 
   final void Function() onFinished;
 
   @override
-  State<DriveSelectorPage> createState() => _DriveSelectorPageState();
+  State<DriveLauncherPage> createState() => _DriveLauncherPageState();
 }
 
-class _DriveSelectorPageState extends State<DriveSelectorPage> {
-  var devices = enumerateStorageDevices();
+class _DriveLauncherPageState extends State<DriveLauncherPage> {
+  List<StorageDevice> storageDevices = [];
 
   @override
   void dispose() {
-    for (var device in devices) {
-      device.dispose();
+    for (var storageDevice in storageDevices) {
+      storageDevice.dispose();
     }
     super.dispose();
   }
 
-  void refreshDevices() {
-    devices = enumerateStorageDevices();
+  @override
+  void initState() {
+    storageDevices = enumerateStorageDevices();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final buttons = devices.map((device) {
+    final buttons = storageDevices.map((device) {
       final text = "${device.getName()}\n${device.getSerial()}";
       return FilledButton(
         onPressed: () {
@@ -61,18 +63,9 @@ class _DriveSelectorPageState extends State<DriveSelectorPage> {
       ),
     );
 
-    final floatingButton = FloatingActionButton(
-      onPressed: () {
-        refreshDevices();
-      },
-      backgroundColor: colorScheme.primary,
-      child: Icon(Icons.refresh, color: colorScheme.onPrimary),
-    );
-
     return Scaffold(
       appBar: appBar,
       body: body,
-      floatingActionButton: floatingButton,
     );
   }
 }

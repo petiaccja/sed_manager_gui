@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/errors.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
-import 'package:sed_manager_gui/interface/table_selector.dart';
+import 'package:sed_manager_gui/interface/table_editor.dart';
 import 'package:sed_manager_gui/interface/error_popup.dart';
 import 'unlocker.dart';
 
@@ -12,7 +12,9 @@ class ActivityLauncherPage extends StatelessWidget {
   final StorageDevice device;
 
   void launchActivity(
-      BuildContext context, Widget Function(BuildContext) builder) {
+    BuildContext context,
+    Widget Function(BuildContext) builder,
+  ) {
     Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: builder,
@@ -21,15 +23,10 @@ class ActivityLauncherPage extends StatelessWidget {
   }
 
   void launchEditTables(BuildContext context) {
-    try {
-      var manager = EncryptedDevice(device);
-      launchActivity(
-          context, (BuildContext context) => TableSelectorPage(manager));
-    } on Exception catch (ex) {
-      showDialog(
-          context: context,
-          builder: (context) => ErrorPopupPage(ex.toString()));
-    }
+    launchActivity(
+      context,
+      (BuildContext context) => TableEditorPage(device),
+    );
   }
 
   void launchUnlock(BuildContext context) {

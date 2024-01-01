@@ -1,6 +1,5 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
-import 'package:sed_manager_gui/bindings/errors.dart';
 
 const libraryPath =
     r"D:\Programming\SEDManager\build\Debug\bin\SEDManagerCAPI.dll";
@@ -10,6 +9,7 @@ typedef Handle = Pointer<Void>;
 typedef CallbackVoid = Void Function(Uint32);
 typedef CallbackString = Void Function(Uint32, Pointer<Utf8>);
 typedef CallbackUid = Void Function(Uint32, Uint64);
+typedef CallbackHandle = Void Function(Uint32, Handle);
 
 class SEDManagerCAPI {
   SEDManagerCAPI._privateConstructor();
@@ -79,6 +79,13 @@ class SEDManagerCAPI {
       dylib.lookupFunction<Handle Function(Handle), Handle Function(Handle)>(
     "EncryptedDevice_Create",
     isLeaf: true,
+  );
+
+  final encryptedDeviceStart = dylib.lookupFunction<
+      Void Function(Handle, Pointer<NativeFunction<CallbackHandle>>),
+      void Function(Handle, Pointer<NativeFunction<CallbackHandle>>)>(
+    "EncryptedDevice_Start",
+    isLeaf: false,
   );
 
   final encryptedDeviceRelease =
