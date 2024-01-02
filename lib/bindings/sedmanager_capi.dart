@@ -1,3 +1,15 @@
+// TODO:
+// Use native finalizers.
+// This would help with this dispose hell...
+// Then I could define multiple wrapper classes properly:
+//  - StorageDevice
+//  - EncryptedDevice -> must still be dispose()-ed
+//  - Value
+//  - Type
+//  - Future_Void / Future_String / Future_UID / Future_Value
+// https://api.dart.dev/stable/3.2.4/dart-ffi/NativeFinalizer-class.html
+
+
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 

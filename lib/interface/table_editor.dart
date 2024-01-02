@@ -45,10 +45,13 @@ class SecurityProviderDropdown extends StatelessWidget {
     }).toList();
 
     if (securityProviders.isEmpty) {
-      return const DropdownMenu(
-        dropdownMenuEntries: [],
-        enabled: false,
-        errorText: "No security providers",
+      return const Tooltip(
+        message: "no security providers on device",
+        child: DropdownMenu(
+          dropdownMenuEntries: [],
+          enabled: false,
+          hintText: "Empty",
+        ),
       );
     }
     return DropdownMenu(
@@ -60,10 +63,13 @@ class SecurityProviderDropdown extends StatelessWidget {
   }
 
   Widget _buildWithError(Object error) {
-    return const DropdownMenu(
-      dropdownMenuEntries: [],
-      enabled: false,
-      errorText: "Error loading SPs",
+    return Tooltip(
+      message: error.toString(),
+      child: const DropdownMenu(
+        dropdownMenuEntries: [],
+        hintText: "Error",
+        enabled: false,
+      ),
     );
   }
 
@@ -92,8 +98,8 @@ class SecurityProviderDropdown extends StatelessWidget {
   }
 }
 
-class TableDrawer extends StatelessWidget {
-  TableDrawer(
+class TableListView extends StatelessWidget {
+  TableListView(
     this.encryptedDevice,
     this.securityProvider, {
     this.onSelected,
@@ -123,38 +129,68 @@ class TableDrawer extends StatelessWidget {
     return tables;
   }
 
-  Widget _buildWithData(List<(UID, String)> tables) {
+  Widget _buildWithData(BuildContext context, List<(UID, String)> tables) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final entries = tables.map((table) {
-      return SizedBox(
-        width: 200,
-        height: 32,
-        child: ElevatedButton(
-          child: Text(table.$2),
-          onPressed: () {
-            onSelected?.call(table.$1);
-          },
-        ),
+      return TextButton(
+        child: Text(table.$2),
+        onPressed: () {
+          onSelected?.call(table.$1);
+        },
       );
     }).toList();
 
-    return SizedBox(
-      width: 200,
-      height: 300,
-      child: ListView(
-        children: entries,
+    final separator = Container(
+      height: 1,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.background,
+            colorScheme.primary,
+            colorScheme.primary,
+            colorScheme.background,
+          ],
+        ),
       ),
+    );
+
+    final separated =
+        entries.map((e) => [separator, e]).expand((e) => e).toList();
+    separated.add(separator);
+
+    return ListView(
+      children: separated,
     );
   }
 
   Widget _buildWithError(Object error) {
-    return const Text("error");
+    return Column(
+      children: [
+        const Text(
+          "Error loading tables",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        Text(
+          textAlign: TextAlign.center,
+          error.toString(),
+          maxLines: 1000,
+        ),
+      ],
+    );
   }
 
   Widget _buildWaiting() {
-    return const SizedBox(
-      width: 48,
-      height: 48,
-      child: Center(child: CircularProgressIndicator()),
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: CircularProgressIndicator(),
+        ),
+        Text("Loading tables..."),
+      ],
     );
   }
 
@@ -163,12 +199,15 @@ class TableDrawer extends StatelessWidget {
     return RequestBuilder(
       request: tables,
       builder: (context, snapshot) {
+        Widget? content;
         if (snapshot.hasData) {
-          return _buildWithData(snapshot.data!);
+          content = _buildWithData(context, snapshot.data!);
         } else if (snapshot.hasError) {
-          return _buildWithError(snapshot.error!);
+          content = _buildWithError(snapshot.error!);
+        } else {
+          content = _buildWaiting();
         }
-        return _buildWaiting();
+        return SizedBox(width: 200, child: content);
       },
     );
   }
@@ -345,7 +384,8 @@ class TableEditorPage extends StatelessWidget {
       children: [
         Container(
           margin: const EdgeInsets.all(6),
-          child: TableDrawer(
+          height: double.infinity,
+          child: TableListView(
             encryptedDevice,
             securityProvider,
             onSelected: (table) {
@@ -360,15 +400,13 @@ class TableEditorPage extends StatelessWidget {
               stream: tableStream.stream,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  return IntrinsicWidth(
-                    child: TableView(
-                      encryptedDevice,
-                      securityProvider,
-                      snapshot.data!,
-                    ),
+                  return TableView(
+                    encryptedDevice,
+                    securityProvider,
+                    snapshot.data!,
                   );
                 }
-                return const Center(child: Text("Select a security table"));
+                return const Center(child: Text("Select a table."));
               },
             ),
           ),
@@ -401,7 +439,7 @@ class TableEditorPage extends StatelessWidget {
                   key: ObjectKey(snapshot.data!),
                 );
               }
-              return const Center(child: Text("Select a security provider"));
+              return const Center(child: Text("Select a security provider."));
             },
           ),
         ),

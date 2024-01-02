@@ -4,8 +4,71 @@ import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
 import 'package:table_sticky_headers/table_sticky_headers.dart';
 
-class UidCell extends StatelessWidget {
-  UidCell(
+class TableCell extends StatelessWidget {
+  const TableCell({
+    this.fill = false,
+    required this.child,
+    super.key,
+  });
+
+  final bool fill;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final border = fill
+        ? Border.symmetric(
+            vertical: BorderSide(
+              color: colorScheme.inversePrimary,
+            ),
+          )
+        : Border.all(
+            color: colorScheme.primary,
+          );
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        border: border,
+        color: fill ? colorScheme.primary : null,
+      ),
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        child: child,
+      ),
+    );
+  }
+}
+
+class HeaderTableCell extends StatelessWidget {
+  const HeaderTableCell(this.name, {super.key});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return TableCell(
+      fill: true,
+      child: Text(
+        name,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: colorScheme.onPrimary,
+        ),
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+}
+
+class UIDTableCell extends StatelessWidget {
+  UIDTableCell(
     this.encryptedDevice,
     this.object,
     this.securityProvider, {
@@ -28,15 +91,21 @@ class UidCell extends StatelessWidget {
       request: friendlyName,
       builder: (context, snapshot) {
         final text = snapshot.data ?? object.toRadixString(16).padLeft(16, '0');
-        return Text(text, overflow: TextOverflow.ellipsis);
+        return Tooltip(
+          waitDuration: Durations.long4,
+          message: text,
+          child: TableCell(
+            child: Text(text, overflow: TextOverflow.ellipsis),
+          ),
+        );
       },
     );
   }
 }
 
-class ValueCell extends StatelessWidget {
-  ValueCell(
-    this.device,
+class CellLinkedTextField extends StatefulWidget {
+  const CellLinkedTextField(
+    this.encryptedDevice,
     this.securityProvider,
     this.table,
     this.object,
@@ -44,42 +113,165 @@ class ValueCell extends StatelessWidget {
     super.key,
   });
 
-  final EncryptedDevice device;
+  final EncryptedDevice encryptedDevice;
   final UID securityProvider;
   final UID table;
   final UID object;
   final int column;
-  late final value = request(_getValue);
 
-  Future<String> _getValue() async {
-    return await device.getObjectColumn(
-      table,
-      object,
-      column,
-      securityProvider: securityProvider,
+  @override
+  State<StatefulWidget> createState() => _CellLinkedTextFieldState();
+}
+
+class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
+  var getSnapshot = const AsyncSnapshot<String>.waiting();
+  var setSnapshot = const AsyncSnapshot<bool>.waiting();
+  Request<void>? getRequest;
+  Request<void>? setRequest;
+
+  @override
+  void initState() {
+    getRequest = request(_getValue);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    getRequest?.future.ignore();
+    setRequest?.future.ignore();
+    getRequest?.cancel();
+    setRequest?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _showFailureDialog(String message) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Could not set value"),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _getValue() async {
+    try {
+      final value = await widget.encryptedDevice.getObjectColumn(
+        widget.table,
+        widget.object,
+        widget.column,
+        securityProvider: widget.securityProvider,
+      );
+      setState(() {
+        getSnapshot =
+            AsyncSnapshot<String>.withData(ConnectionState.done, value);
+      });
+    } catch (ex) {
+      setState(() {
+        getSnapshot = AsyncSnapshot<String>.withError(ConnectionState.done, ex);
+      });
+    }
+  }
+
+  Future<void> _setValue(String value) async {
+    try {
+      await widget.encryptedDevice.setObjectColumn(
+        widget.table,
+        widget.object,
+        widget.column,
+        value,
+        securityProvider: widget.securityProvider,
+      );
+      setState(() {
+        getSnapshot =
+            AsyncSnapshot<String>.withData(ConnectionState.done, value);
+        setSnapshot =
+            const AsyncSnapshot<bool>.withData(ConnectionState.done, true);
+      });
+    } catch (ex) {
+      setState(() {
+        setSnapshot = AsyncSnapshot<bool>.withError(ConnectionState.done, ex);
+        _showFailureDialog(ex.toString());
+      });
+    }
+  }
+
+  Widget _buildContentWithData(BuildContext context, String data) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final textColor = setSnapshot.hasData
+        ? Colors.green
+        : setSnapshot.hasError
+            ? colorScheme.error
+            : colorScheme.onBackground;
+
+    final textField = TextField(
+      style: TextStyle(color: textColor),
+      textAlign: TextAlign.left,
+      textAlignVertical: TextAlignVertical.center,
+      autocorrect: false,
+      readOnly: false,
+      maxLines: 1,
+      controller: TextEditingController(text: data),
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.zero, borderSide: BorderSide.none),
+        contentPadding: EdgeInsets.all(0),
+      ),
+      onSubmitted: (value) {
+        setRequest?.future.ignore();
+        setRequest?.cancel();
+        setRequest = request(() async {
+          return await _setValue(value);
+        });
+      },
+    );
+
+    return textField;
+  }
+
+  Widget _buildContentWithError(Object error) {
+    return Tooltip(
+      message: error.toString(),
+      child: const Text(
+        "Error",
+        style: TextStyle(fontStyle: FontStyle.italic),
+      ),
+    );
+  }
+
+  Widget _buildContentWaiting() {
+    return const Center(
+      child: SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return RequestBuilder(
-      request: value,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return Text(snapshot.data!, overflow: TextOverflow.ellipsis);
-        }
-        if (snapshot.hasError) {
-          return const Text("<error>");
-        }
-        return const Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
-    );
+    Widget? content;
+    if (getSnapshot.hasData) {
+      content = _buildContentWithData(context, getSnapshot.data!);
+    } else if (getSnapshot.hasError) {
+      content = _buildContentWithError(getSnapshot.error!);
+    } else {
+      content = _buildContentWaiting();
+    }
+    return TableCell(child: content);
   }
 }
 
@@ -108,20 +300,22 @@ class TableView extends StatelessWidget {
     List<String> columns,
   ) {
     Widget headerBuilder(columnIdx) {
-      return Text(
-        columns[columnIdx + 1],
-        style: const TextStyle(fontWeight: FontWeight.bold),
-        overflow: TextOverflow.ellipsis,
-      );
+      return HeaderTableCell(columns[columnIdx + 1]);
     }
 
     Widget rowBuilder(rowIdx) {
-      return UidCell(encryptedDevice, rows[rowIdx], securityProvider);
+      return UIDTableCell(encryptedDevice, rows[rowIdx], securityProvider);
     }
 
     Widget valueBuilder(columnIdx, rowIdx) {
-      return ValueCell(encryptedDevice, securityProvider, table, rows[rowIdx],
-          columnIdx + 1);
+      return CellLinkedTextField(
+        encryptedDevice,
+        securityProvider,
+        table,
+        rows[rowIdx],
+        columnIdx + 1,
+        key: ObjectKey((encryptedDevice, table, columnIdx, rowIdx)),
+      );
     }
 
     return StickyHeadersTable(
@@ -133,7 +327,7 @@ class TableView extends StatelessWidget {
       legendCell: headerBuilder(-1),
       showHorizontalScrollbar: true,
       showVerticalScrollbar: true,
-      cellDimensions: const CellDimensions.uniform(width: 86, height: 26),
+      cellDimensions: const CellDimensions.uniform(width: 112, height: 26),
     );
   }
 

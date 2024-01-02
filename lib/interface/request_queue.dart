@@ -85,9 +85,8 @@ class _RequestBuilderState<T> extends State<RequestBuilder<T>> {
 
   @override
   void deactivate() {
-    if (widget.request != null) {
-      widget.request!.cancel();
-    }
+    widget.request?.future.ignore();
+    widget.request?.cancel();
     super.deactivate();
   }
 }
