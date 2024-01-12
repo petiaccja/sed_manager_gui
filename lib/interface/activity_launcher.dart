@@ -23,49 +23,33 @@ class ActivityLauncherPage extends StatelessWidget {
   }
 
   void launchEditTables(BuildContext context) {
-    launchActivity(
-      context,
-      (BuildContext context) => TableEditorPage(device),
-    );
+    launchActivity(context, (BuildContext context) => TableEditorPage(device));
   }
 
   void launchUnlock(BuildContext context) {
-    try {
-      var manager = EncryptedDevice(device);
-      launchActivity(context, (BuildContext context) => UnlockerPage(manager));
-    } on SEDException catch (ex) {
-      showDialog(
-          context: context, builder: (context) => ErrorPopupPage(ex.message));
-    }
+    launchActivity(context, (BuildContext context) => UnlockerPage(device));
   }
 
-  Widget launcherButton(BuildContext context, void Function()? callback,
-      String caption, IconData? icon) {
+  Widget launcherButton(BuildContext context, void Function()? callback, String caption, IconData? icon) {
     var colorScheme = Theme.of(context).colorScheme;
     var text = Text(caption, style: const TextStyle(fontSize: 18));
     var face = icon != null
-        ? Wrap(direction: Axis.horizontal, children: [
-            Icon(icon, color: colorScheme.inversePrimary),
-            const SizedBox(width: 4),
-            text
-          ])
+        ? Wrap(
+            direction: Axis.horizontal,
+            children: [Icon(icon, color: colorScheme.inversePrimary), const SizedBox(width: 4), text])
         : text;
     return FilledButton(onPressed: callback, child: face);
   }
 
-  Widget launcherGroup(BuildContext context,
-      List<(void Function()?, String, IconData?)> launchers) {
+  Widget launcherGroup(BuildContext context, List<(void Function()?, String, IconData?)> launchers) {
     var buttons = launchers.map((launcher) {
       return launcherButton(context, launcher.$1, launcher.$2, launcher.$3);
     });
     return Container(
         margin: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         width: double.infinity,
-        child: Wrap(
-            alignment: WrapAlignment.start,
-            direction: Axis.horizontal,
-            spacing: 16,
-            children: buttons.toList()));
+        child:
+            Wrap(alignment: WrapAlignment.start, direction: Axis.horizontal, spacing: 16, children: buttons.toList()));
   }
 
   @override
@@ -102,8 +86,7 @@ class ActivityLauncherPage extends StatelessWidget {
 
     return Scaffold(
         appBar: AppBar(
-            title: Text(title, style: TextStyle(color: colorScheme.onPrimary)),
-            backgroundColor: colorScheme.primary),
+            title: Text(title, style: TextStyle(color: colorScheme.onPrimary)), backgroundColor: colorScheme.primary),
         body: Column(children: [
           groupExpert,
           groupGuided,

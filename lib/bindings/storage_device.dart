@@ -1,69 +1,51 @@
 import 'dart:core';
 import 'dart:ffi';
-import 'package:ffi/ffi.dart';
 import 'package:sed_manager_gui/bindings/errors.dart';
+import 'package:sed_manager_gui/bindings/string.dart';
 import 'sedmanager_capi.dart';
 
-class StorageDevice {
-  StorageDevice(this.path) {
+class StorageDevice implements Finalizable {
+  StorageDevice(String path) {
     final api = SEDManagerCAPI();
-    final pathNative = path.toNativeUtf8();
-    handle = api.storageDeviceCreate(pathNative.cast<Char>());
-    malloc.free(pathNative);
-    if (handle == nullptr) {
+    final pathWrapper = StringWrapper.fromString(path);
+    _handle = api.storageDeviceCreate(pathWrapper.handle());
+    if (_handle == nullptr) {
       throw SEDException(getLastErrorMessage());
     }
   }
 
   final _capi = SEDManagerCAPI();
-  late final Handle handle;
-  final String path;
-
-  void dispose() {
-    final api = SEDManagerCAPI();
-    api.storageDeviceRelease(handle);
-  }
+  late final Pointer<CStorageDevice> _handle;
 
   String getName() {
-    final chars = _capi.storageDeviceGetName(handle);
-    if (chars == nullptr) {
-      throw SEDException(getLastErrorMessage());
-    }
-    return _capi.convertCString(chars);
+    final nameWrapper = StringWrapper(_capi.storageDeviceGetName(_handle));
+    return nameWrapper.toDartString();
   }
 
   String getSerial() {
-    final capi = SEDManagerCAPI();
-    final chars = capi.storageDeviceGetSerial(handle);
-    if (chars == nullptr) {
-      throw SEDException(getLastErrorMessage());
-    }
-    return _capi.convertCString(chars);
+    final nameWrapper = StringWrapper(_capi.storageDeviceGetSerial(_handle));
+    return nameWrapper.toDartString();
+  }
+
+  Pointer<CStorageDevice> handle() {
+    return _handle;
   }
 }
 
 List<StorageDevice> enumerateStorageDevices() {
   final capi = SEDManagerCAPI();
-  final chars = capi.enumerateStorageDevices();
+  final devicePaths = StringWrapper(capi.enumerateStorageDevices()).toDartString();
 
-  if (chars == nullptr) {
-    throw SEDException(getLastErrorMessage());
-  }
-  try {
-    final str = chars.cast<Utf8>().toDartString();
-    final paths = str.split(';');
-    paths.retainWhere((element) => element.isNotEmpty);
+  final paths = devicePaths.split(';');
+  paths.retainWhere((element) => element.isNotEmpty);
 
-    var devices = <StorageDevice>[];
-    for (var path in paths) {
-      try {
-        devices.add(StorageDevice(path));
-      } catch (ex) {
-        // Ignore devices that failed to open.
-      }
+  var devices = <StorageDevice>[];
+  for (var path in paths) {
+    try {
+      devices.add(StorageDevice(path));
+    } catch (ex) {
+      // Ignore devices that failed to open.
     }
-    return devices;
-  } finally {
-    capi.stringRelease(chars.cast());
   }
+  return devices;
 }

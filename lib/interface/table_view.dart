@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
 import 'package:table_sticky_headers/table_sticky_headers.dart';
+import 'package:sed_manager_gui/bindings/value.dart';
 
 class TableCell extends StatelessWidget {
   const TableCell({
@@ -81,8 +82,7 @@ class UIDTableCell extends StatelessWidget {
   late final friendlyName = request(_getFriendlyName);
 
   Future<String?> _getFriendlyName() async {
-    return await encryptedDevice.findName(object,
-        securityProvider: securityProvider);
+    return await encryptedDevice.findName(object, securityProvider: securityProvider);
   }
 
   @override
@@ -171,11 +171,10 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
         widget.table,
         widget.object,
         widget.column,
-        securityProvider: widget.securityProvider,
       );
+      final rendered = value.handle().toString(); // TODO: render properly.
       setState(() {
-        getSnapshot =
-            AsyncSnapshot<String>.withData(ConnectionState.done, value);
+        getSnapshot = AsyncSnapshot<String>.withData(ConnectionState.done, rendered);
       });
     } catch (ex) {
       setState(() {
@@ -186,18 +185,11 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
 
   Future<void> _setValue(String value) async {
     try {
-      await widget.encryptedDevice.setObjectColumn(
-        widget.table,
-        widget.object,
-        widget.column,
-        value,
-        securityProvider: widget.securityProvider,
-      );
+      final parsed = Value.empty();
+      await widget.encryptedDevice.setObjectColumn(widget.table, widget.object, widget.column, parsed);
       setState(() {
-        getSnapshot =
-            AsyncSnapshot<String>.withData(ConnectionState.done, value);
-        setSnapshot =
-            const AsyncSnapshot<bool>.withData(ConnectionState.done, true);
+        getSnapshot = AsyncSnapshot<String>.withData(ConnectionState.done, value);
+        setSnapshot = const AsyncSnapshot<bool>.withData(ConnectionState.done, true);
       });
     } catch (ex) {
       setState(() {
@@ -225,8 +217,7 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
       maxLines: 1,
       controller: TextEditingController(text: data),
       decoration: const InputDecoration(
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.zero, borderSide: BorderSide.none),
+        border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide.none),
         contentPadding: EdgeInsets.all(0),
       ),
       onSubmitted: (value) {

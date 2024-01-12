@@ -1,10 +1,11 @@
 import 'dart:core';
+import 'string.dart';
 import 'sedmanager_capi.dart';
 
 String getLastErrorMessage() {
   final capi = SEDManagerCAPI();
-  final chars = capi.getLastErrorMessage();
-  return capi.convertCString(chars);
+  final message = StringWrapper(capi.getLastExceptionMessage());
+  return message.toDartString();
 }
 
 class SEDException implements Exception {
