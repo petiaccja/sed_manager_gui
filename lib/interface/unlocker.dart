@@ -16,15 +16,9 @@ class UnlockerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: colorScheme.primary,
-        title: Text(
-          "Unlock drive",
-          style: TextStyle(color: colorScheme.onPrimary),
-        ),
+        title: const Text("Unlock drive"),
       ),
       body: _buildBody(context),
     );

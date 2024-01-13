@@ -137,7 +137,7 @@ class TableListView extends StatelessWidget {
 
     final entries = tables.map((table) {
       return TextButton(
-        child: Text(table.$2),
+        child: Text(table.$2, style: TextStyle(color: colorScheme.onBackground)),
         onPressed: () {
           onSelected?.call(table.$1);
         },
@@ -149,10 +149,10 @@ class TableListView extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            colorScheme.background,
-            colorScheme.primary,
-            colorScheme.primary,
-            colorScheme.background,
+            colorScheme.outline.withAlpha(128),
+            colorScheme.outline,
+            colorScheme.outline,
+            colorScheme.outline.withAlpha(128),
           ],
         ),
       ),
@@ -225,15 +225,7 @@ class TableEditorPage extends StatelessWidget {
   }
 
   static AppBar _buildAppBar(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AppBar(
-      title: Text(
-        "Table editor",
-        style: TextStyle(color: colorScheme.onPrimary),
-      ),
-      backgroundColor: colorScheme.primary,
-    );
+    return AppBar(title: const Text("Table editor"));
   }
 
   static Widget _buildSession(

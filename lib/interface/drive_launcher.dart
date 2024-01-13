@@ -33,22 +33,18 @@ class StorageDeviceCard extends StatelessWidget {
   }
 
   Widget _buildCard(BuildContext context, Widget child) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return SizedBox(
       width: 280,
       height: 176,
       child: Card(
-        //color: colorScheme.primary,
         child: Container(margin: const EdgeInsets.all(8), child: child),
       ),
     );
   }
 
   Widget _buildWithData(BuildContext context, StorageDeviceProperties data) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
-    final infoStyle = TextStyle(fontSize: 14);
+    const titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+    const infoStyle = TextStyle(fontSize: 14);
 
     final sscNames = data.supportedSSCs.isNotEmpty ? data.supportedSSCs.join(', ') : "-";
 
@@ -83,9 +79,8 @@ class StorageDeviceCard extends StatelessWidget {
   }
 
   Widget _buildWithError(BuildContext context, Object error) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = TextStyle(color: colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold);
-    final infoStyle = TextStyle(color: colorScheme.onPrimary, fontSize: 14);
+    const titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+    const infoStyle = TextStyle(fontSize: 14);
 
     final name = _storageDevice.getName();
 
@@ -99,8 +94,7 @@ class StorageDeviceCard extends StatelessWidget {
   }
 
   Widget _buildWaiting(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = TextStyle(color: colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold);
+    const titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
 
     final name = _storageDevice.getName();
 
@@ -157,18 +151,12 @@ class _DriveLauncherPageState extends State<DriveLauncherPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     final cards = storageDevices.map((device) {
       return StorageDeviceCard(device, onConfigure: () => _onConfigure(device));
     });
 
     final appBar = AppBar(
-      backgroundColor: colorScheme.secondary,
-      title: Text(
-        "Storage devices",
-        style: TextStyle(color: colorScheme.onPrimary),
-      ),
+      title: const Text("Storage devices"),
     );
 
     final body = Container(

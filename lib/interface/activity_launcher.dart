@@ -85,8 +85,7 @@ class ActivityLauncherPage extends StatelessWidget {
     ]);
 
     return Scaffold(
-        appBar: AppBar(
-            title: Text(title, style: TextStyle(color: colorScheme.onPrimary)), backgroundColor: colorScheme.primary),
+        appBar: AppBar(title: Text(title)),
         body: Column(children: [
           groupExpert,
           groupGuided,

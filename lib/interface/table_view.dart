@@ -23,11 +23,11 @@ class TableCell extends StatelessWidget {
     final border = fill
         ? Border.symmetric(
             vertical: BorderSide(
-              color: colorScheme.inversePrimary,
+              color: colorScheme.outlineVariant,
             ),
           )
         : Border.all(
-            color: colorScheme.primary,
+            color: colorScheme.outline,
           );
 
     return Container(
