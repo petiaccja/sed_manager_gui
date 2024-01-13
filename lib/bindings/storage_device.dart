@@ -27,6 +27,23 @@ class StorageDevice implements Finalizable {
     return nameWrapper.toDartString();
   }
 
+  String getFirmware() {
+    final nameWrapper = StringWrapper(_capi.storageDeviceGetFirmware(_handle));
+    return nameWrapper.toDartString();
+  }
+
+  String getInterface() {
+    final nameWrapper = StringWrapper(_capi.storageDeviceGetInterface(_handle));
+    return nameWrapper.toDartString();
+  }
+
+  List<String> getSSCs() {
+    final nameWrapper = StringWrapper(_capi.storageDeviceGetSSCs(_handle));
+    var sscs = nameWrapper.toDartString().split(";");
+    sscs.removeWhere((element) => element.isEmpty);
+    return sscs;
+  }
+
   Pointer<CStorageDevice> handle() {
     return _handle;
   }

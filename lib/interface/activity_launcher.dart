@@ -36,7 +36,7 @@ class ActivityLauncherPage extends StatelessWidget {
     var face = icon != null
         ? Wrap(
             direction: Axis.horizontal,
-            children: [Icon(icon, color: colorScheme.inversePrimary), const SizedBox(width: 4), text])
+            children: [Icon(icon, color: colorScheme.onPrimary), const SizedBox(width: 4), text])
         : text;
     return FilledButton(onPressed: callback, child: face);
   }

@@ -20,6 +20,8 @@ final class CString extends Opaque {}
 
 final class CValue extends Opaque {}
 
+final class CType extends Opaque {}
+
 final class CStorageDevice extends Opaque {}
 
 final class CEncryptedDevice extends Opaque {}
@@ -194,6 +196,18 @@ class SEDManagerCAPI {
   );
 
   //----------------------------------------------------------------------------
+  // CValue
+  //----------------------------------------------------------------------------
+
+  final typeCreate = dylib.lookupFunction<Pointer<CType> Function(), Pointer<CType> Function()>(
+    "CType_Create",
+    isLeaf: true,
+  );
+
+  final typeDestroyAddress = dylib.lookup<NativeFunction<Void Function(Pointer<CType>)>>("CType_Destroy");
+  late final typeDestroy = typeDestroyAddress.asFunction<void Function(Pointer<CType>)>(isLeaf: true);
+
+  //----------------------------------------------------------------------------
   // CStorageDevice
   //----------------------------------------------------------------------------
 
@@ -223,6 +237,24 @@ class SEDManagerCAPI {
   final storageDeviceGetSerial = dylib.lookupFunction<Pointer<CString> Function(Pointer<CStorageDevice>),
       Pointer<CString> Function(Pointer<CStorageDevice>)>(
     "CStorageDevice_GetSerial",
+    isLeaf: true,
+  );
+
+  final storageDeviceGetFirmware = dylib.lookupFunction<Pointer<CString> Function(Pointer<CStorageDevice>),
+      Pointer<CString> Function(Pointer<CStorageDevice>)>(
+    "CStorageDevice_GetFirmware",
+    isLeaf: true,
+  );
+
+  final storageDeviceGetInterface = dylib.lookupFunction<Pointer<CString> Function(Pointer<CStorageDevice>),
+      Pointer<CString> Function(Pointer<CStorageDevice>)>(
+    "CStorageDevice_GetInterface",
+    isLeaf: true,
+  );
+
+  final storageDeviceGetSSCs = dylib.lookupFunction<Pointer<CString> Function(Pointer<CStorageDevice>),
+      Pointer<CString> Function(Pointer<CStorageDevice>)>(
+    "CStorageDevice_GetSSCs",
     isLeaf: true,
   );
 
@@ -294,10 +326,24 @@ class SEDManagerCAPI {
     isLeaf: true,
   );
 
-  final encryptedDeviceGetTableColumns = dylib.lookupFunction<
-      Pointer<CStreamString> Function(Pointer<CEncryptedDevice>, CUID),
-      Pointer<CStreamString> Function(Pointer<CEncryptedDevice>, int)>(
-    "CEncryptedDevice_GetTableColumns",
+  final encryptedDeviceGetColumnCount = dylib.lookupFunction<
+      Size Function(Pointer<CEncryptedDevice>, CUID),
+      int Function(Pointer<CEncryptedDevice>, int)>(
+    "CEncryptedDevice_GetColumnCount",
+    isLeaf: true,
+  );
+
+  final encryptedDeviceGetColumnName = dylib.lookupFunction<
+      Pointer<CString> Function(Pointer<CEncryptedDevice>, CUID, Uint32),
+      Pointer<CString> Function(Pointer<CEncryptedDevice>, int, int)>(
+    "CEncryptedDevice_GetColumnName",
+    isLeaf: true,
+  );
+
+  final encryptedDeviceGetColumnType = dylib.lookupFunction<
+      Pointer<CType> Function(Pointer<CEncryptedDevice>, CUID, Uint32),
+      Pointer<CType> Function(Pointer<CEncryptedDevice>, int, int)>(
+    "CEncryptedDevice_GetColumnType",
     isLeaf: true,
   );
 
@@ -330,6 +376,20 @@ class SEDManagerCAPI {
   final encryptedDeviceActivate = dylib.lookupFunction<Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, CUID),
       Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, int)>(
     "CEncryptedDevice_Activate",
+    isLeaf: true,
+  );
+
+  final encryptedDeviceRenderValue = dylib.lookupFunction<
+      Pointer<CString> Function(Pointer<CEncryptedDevice>, Pointer<CValue>, Pointer<CType>, CUID),
+      Pointer<CString> Function(Pointer<CEncryptedDevice>, Pointer<CValue>, Pointer<CType>, int)>(
+    "CEncryptedDevice_RenderValue",
+    isLeaf: true,
+  );
+
+  final encryptedDeviceParseValue = dylib.lookupFunction<
+      Pointer<CValue> Function(Pointer<CEncryptedDevice>, Pointer<CString>, Pointer<CType>, CUID),
+      Pointer<CValue> Function(Pointer<CEncryptedDevice>, Pointer<CString>, Pointer<CType>, int)>(
+    "CEncryptedDevice_ParseValue",
     isLeaf: true,
   );
 

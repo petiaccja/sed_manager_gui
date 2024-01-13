@@ -4,10 +4,11 @@ import '../bindings/storage_device.dart';
 import 'request_queue.dart';
 
 class StorageDeviceProperties {
-  StorageDeviceProperties(this.name, this.serial, this.firmware, this.supportedSSCs);
+  StorageDeviceProperties(this.name, this.serial, this.firmware, this.interface, this.supportedSSCs);
   final String name;
   final String serial;
   final String firmware;
+  String interface;
   final List<String> supportedSSCs;
 }
 
@@ -25,7 +26,10 @@ class StorageDeviceCard extends StatelessWidget {
   Future<StorageDeviceProperties> _getProperties() async {
     final name = _storageDevice.getName();
     final serial = _storageDevice.getSerial();
-    return StorageDeviceProperties(name, serial, "???", <String>["???"]);
+    final firmware = _storageDevice.getFirmware();
+    final interface = _storageDevice.getInterface();
+    final sscs = _storageDevice.getSSCs();
+    return StorageDeviceProperties(name, serial, firmware, interface, sscs);
   }
 
   Widget _buildCard(BuildContext context, Widget child) {
@@ -33,9 +37,9 @@ class StorageDeviceCard extends StatelessWidget {
 
     return SizedBox(
       width: 280,
-      height: 160,
+      height: 176,
       child: Card(
-        color: colorScheme.primary,
+        //color: colorScheme.primary,
         child: Container(margin: const EdgeInsets.all(8), child: child),
       ),
     );
@@ -43,26 +47,37 @@ class StorageDeviceCard extends StatelessWidget {
 
   Widget _buildWithData(BuildContext context, StorageDeviceProperties data) {
     final colorScheme = Theme.of(context).colorScheme;
-    final titleStyle = TextStyle(color: colorScheme.onPrimary, fontSize: 18, fontWeight: FontWeight.bold);
-    final infoStyle = TextStyle(color: colorScheme.onPrimary, fontSize: 14);
-    final content = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(child: Text(data.name, style: titleStyle)),
-        Text("Serial: ${data.serial}", style: infoStyle),
-        Text("Firmware: ${data.firmware}", style: infoStyle),
-        Text("Encryption: ${data.supportedSSCs.join(', ')}", style: infoStyle),
+    final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+    final infoStyle = TextStyle(fontSize: 14);
+
+    final sscNames = data.supportedSSCs.isNotEmpty ? data.supportedSSCs.join(', ') : "-";
+
+    final items = <Widget>[
+      Center(child: Text(data.name, style: titleStyle)),
+      const SizedBox(height: 6),
+      Text("Serial: ${data.serial}", style: infoStyle),
+      Text("Firmware: ${data.firmware}", style: infoStyle),
+      Text("Interface: ${data.interface}", style: infoStyle),
+      Text("Encryption: $sscNames", style: infoStyle),
+    ];
+
+    if (data.supportedSSCs.isNotEmpty) {
+      items.add(
         Expanded(
           child: Align(
             alignment: Alignment.bottomRight,
-            child: OutlinedButton(
-              style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(colorScheme.inversePrimary)),
+            child: FilledButton(
               onPressed: onConfigure,
               child: const Text("Configure"),
             ),
           ),
         ),
-      ],
+      );
+    }
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items,
     );
     return _buildCard(context, content);
   }
@@ -149,7 +164,7 @@ class _DriveLauncherPageState extends State<DriveLauncherPage> {
     });
 
     final appBar = AppBar(
-      backgroundColor: colorScheme.primary,
+      backgroundColor: colorScheme.secondary,
       title: Text(
         "Storage devices",
         style: TextStyle(color: colorScheme.onPrimary),

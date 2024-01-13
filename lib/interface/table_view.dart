@@ -4,6 +4,7 @@ import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
 import 'package:table_sticky_headers/table_sticky_headers.dart';
 import 'package:sed_manager_gui/bindings/value.dart';
+import 'package:sed_manager_gui/bindings/type.dart';
 
 class TableCell extends StatelessWidget {
   const TableCell({
@@ -109,7 +110,8 @@ class CellLinkedTextField extends StatefulWidget {
     this.securityProvider,
     this.table,
     this.object,
-    this.column, {
+    this.column,
+    this.type, {
     super.key,
   });
 
@@ -118,6 +120,7 @@ class CellLinkedTextField extends StatefulWidget {
   final UID table;
   final UID object;
   final int column;
+  final Type type;
 
   @override
   State<StatefulWidget> createState() => _CellLinkedTextFieldState();
@@ -172,7 +175,7 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
         widget.object,
         widget.column,
       );
-      final rendered = value.handle().toString(); // TODO: render properly.
+      final rendered = widget.encryptedDevice.renderValue(value, widget.type, widget.securityProvider);
       setState(() {
         getSnapshot = AsyncSnapshot<String>.withData(ConnectionState.done, rendered);
       });
@@ -185,7 +188,7 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
 
   Future<void> _setValue(String value) async {
     try {
-      final parsed = Value.empty();
+      final parsed = widget.encryptedDevice.parseValue(value, widget.type, widget.securityProvider);
       await widget.encryptedDevice.setObjectColumn(widget.table, widget.object, widget.column, parsed);
       setState(() {
         getSnapshot = AsyncSnapshot<String>.withData(ConnectionState.done, value);
@@ -266,6 +269,12 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
   }
 }
 
+class ColumnDesc {
+  ColumnDesc(this.name, this.type);
+  final String name;
+  final Type type;
+}
+
 class TableView extends StatelessWidget {
   TableView(
     this.encryptedDevice,
@@ -279,19 +288,25 @@ class TableView extends StatelessWidget {
   final UID table;
   late final layout = request(_getLayout);
 
-  Future<(List<UID>, List<String>)> _getLayout() async {
+  Future<(List<UID>, List<ColumnDesc>)> _getLayout() async {
     final rows = await encryptedDevice.getTableRows(table).toList();
-    final columns = await encryptedDevice.getTableColumns(table).toList();
+    final columns = <ColumnDesc>[];
+    for (int column = 0; column < encryptedDevice.getColumnCount(table); ++column) {
+      columns.add(ColumnDesc(
+        encryptedDevice.getColumnName(table, column),
+        encryptedDevice.getColumnType(table, column),
+      ));
+    }
     return (rows, columns);
   }
 
   Widget _buildWithData(
     BuildContext context,
     List<UID> rows,
-    List<String> columns,
+    List<ColumnDesc> columns,
   ) {
     Widget headerBuilder(columnIdx) {
-      return HeaderTableCell(columns[columnIdx + 1]);
+      return HeaderTableCell(columns[columnIdx + 1].name);
     }
 
     Widget rowBuilder(rowIdx) {
@@ -305,6 +320,7 @@ class TableView extends StatelessWidget {
         table,
         rows[rowIdx],
         columnIdx + 1,
+        columns[columnIdx + 1].type,
         key: ObjectKey((encryptedDevice, table, columnIdx, rowIdx)),
       );
     }
