@@ -18,20 +18,18 @@ class SecurityProviderDropdown extends StatelessWidget {
 
   Future<List<(UID, String)>> _getSecurityProviders() async {
     final adminSp = await encryptedDevice.findUid("SP::Admin");
-    if (adminSp == null) {
-      throw SEDException("could not find the Admin SP on the device");
-    }
     final spTable = await encryptedDevice.findUid("SP");
-    if (spTable == null) {
-      throw SEDException("could not find the SP table on the device");
-    }
     await encryptedDevice.login(adminSp);
     try {
       final securityProviders = await encryptedDevice.getTableRows(spTable).toList();
       List<(UID, String)> result = [];
       for (final sp in securityProviders) {
-        final name = await encryptedDevice.findName(sp);
-        result.add((sp, name ?? sp.toRadixString(16).padLeft(16, '0')));
+        try {
+          final name = await encryptedDevice.findName(sp);
+          result.add((sp, name));
+        } catch (ex) {
+          result.add((sp, sp.toRadixString(16).padLeft(16, '0')));
+        }
       }
       return result;
     } finally {
@@ -111,20 +109,18 @@ class TableListView extends StatelessWidget {
   late final Request<List<(UID, String)>> tables = request(_getTables);
 
   Future<List<(UID, String)>> _getTables() async {
-    final tableTable = await encryptedDevice.findUid(
-      "Table",
-      securityProvider: securityProvider,
-    );
-    if (tableTable == null) {
-      throw SEDException("could not find the Table table on the device");
-    }
+    final tableTable = await encryptedDevice.findUid("Table", securityProvider: securityProvider);
 
     List<(UID, String)> tables = [];
     try {
       await for (final tableDesc in encryptedDevice.getTableRows(tableTable)) {
         final table = tableDesc << 32;
-        final name = await encryptedDevice.findName(table);
-        tables.add((table, name ?? table.toRadixString(16).padLeft(16, '0')));
+        try {
+          final name = await encryptedDevice.findName(table);
+          tables.add((table, name));
+        } catch (ex) {
+          tables.add((table, table.toRadixString(16).padLeft(16, '0')));
+        }
       }
       return tables;
     } catch (ex) {
@@ -133,36 +129,34 @@ class TableListView extends StatelessWidget {
   }
 
   Widget _buildWithData(BuildContext context, List<(UID, String)> tables) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     final entries = tables.map((table) {
-      return TextButton(
-        child: Text(table.$2, style: TextStyle(color: colorScheme.onBackground)),
-        onPressed: () {
-          onSelected?.call(table.$1);
-        },
+      return NavigationDrawerDestination(
+        icon: Icon(IconData(table.$2.codeUnits[0])),
+        label: Text(table.$2),
       );
     }).toList();
 
-    final separator = Container(
-      height: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.outline.withAlpha(128),
-            colorScheme.outline,
-            colorScheme.outline,
-            colorScheme.outline.withAlpha(128),
-          ],
-        ),
+    final header = Container(
+      margin: const EdgeInsets.all(6),
+      child: const Center(
+        child: Text("Tables", style: TextStyle(fontSize: 18)),
       ),
     );
 
-    final separated = entries.map((e) => [separator, e]).expand((e) => e).toList();
-    separated.add(separator);
-
-    return ListView(
-      children: separated,
+    final selected = StreamController<int>();
+    return StreamBuilder(
+      stream: selected.stream,
+      builder: (context, snapshot) {
+        return NavigationDrawer(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+          onDestinationSelected: (value) {
+            onSelected?.call(tables[value].$1);
+            selected.add(value);
+          },
+          selectedIndex: snapshot.data,
+          children: [header, ...entries],
+        );
+      },
     );
   }
 
@@ -238,33 +232,27 @@ class TableEditorPage extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          margin: const EdgeInsets.all(6),
-          height: double.infinity,
-          child: TableListView(
-            encryptedDevice,
-            securityProvider,
-            onSelected: (table) {
-              tableStream.add(table);
-            },
-          ),
+        TableListView(
+          encryptedDevice,
+          securityProvider,
+          onSelected: (table) {
+            tableStream.add(table);
+          },
         ),
+        const SizedBox(width: 12),
         Expanded(
-          child: Container(
-            margin: const EdgeInsets.all(6),
-            child: StreamBuilder(
-              stream: tableStream.stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return TableView(
-                    encryptedDevice,
-                    securityProvider,
-                    snapshot.data!,
-                  );
-                }
-                return const Center(child: Text("Select a table."));
-              },
-            ),
+          child: StreamBuilder(
+            stream: tableStream.stream,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return TableView(
+                  encryptedDevice,
+                  securityProvider,
+                  snapshot.data!,
+                );
+              }
+              return const Center(child: Text("Select a table."));
+            },
           ),
         ),
       ],

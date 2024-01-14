@@ -101,6 +101,11 @@ class SEDManagerCAPI {
   final valueDestroyAddress = dylib.lookup<NativeFunction<Void Function(Pointer<CValue>)>>("CValue_Destroy");
   late final valueDestroy = valueDestroyAddress.asFunction<void Function(Pointer<CValue>)>(isLeaf: true);
 
+  final valueHasValue = dylib.lookupFunction<Bool Function(Pointer<CValue>), bool Function(Pointer<CValue>)>(
+    "CValue_HasValue",
+    isLeaf: true,
+  );
+
   final valueIsBytes = dylib.lookupFunction<Bool Function(Pointer<CValue>), bool Function(Pointer<CValue>)>(
     "CValue_IsBytes",
     isLeaf: true,

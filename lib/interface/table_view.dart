@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ffi';
+
 import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
@@ -83,7 +86,11 @@ class UIDTableCell extends StatelessWidget {
   late final friendlyName = request(_getFriendlyName);
 
   Future<String?> _getFriendlyName() async {
-    return await encryptedDevice.findName(object, securityProvider: securityProvider);
+    try {
+      return await encryptedDevice.findName(object, securityProvider: securityProvider);
+    } catch (ex) {
+      return null;
+    }
   }
 
   @override
@@ -104,11 +111,152 @@ class UIDTableCell extends StatelessWidget {
   }
 }
 
-class CellLinkedTextField extends StatefulWidget {
-  const CellLinkedTextField(
+class CellEditDialog extends StatefulWidget {
+  CellEditDialog(
     this.encryptedDevice,
     this.securityProvider,
-    this.table,
+    this.object,
+    this.column,
+    this.type,
+    this.initialValue, {
+    this.onFinished,
+    super.key,
+  });
+
+  final EncryptedDevice encryptedDevice;
+  final UID securityProvider;
+  final UID object;
+  final int column;
+  final Type type;
+  String initialValue;
+  void Function()? onFinished;
+
+  @override
+  State<CellEditDialog> createState() => _CellEditDialogState();
+}
+
+class _CellEditDialogState extends State<CellEditDialog> {
+  var _snapshot = const AsyncSnapshot<bool>.waiting();
+  Request<void>? _request;
+  late final _controller = TextEditingController(text: widget.initialValue);
+
+  Future<void> _setValue(String value) async {
+    try {
+      final parsed = widget.encryptedDevice.parseValue(value, widget.type, widget.securityProvider);
+      await widget.encryptedDevice.setObjectColumn(widget.object, widget.column, parsed);
+      setState(() {
+        _snapshot = const AsyncSnapshot<bool>.withData(ConnectionState.done, true);
+      });
+    } catch (ex) {
+      setState(() {
+        _snapshot = AsyncSnapshot<bool>.withError(ConnectionState.done, ex);
+      });
+    }
+  }
+
+  void _set() {
+    _request?.cancel();
+    _request = request(() => _setValue(_controller.text));
+  }
+
+  void _close() {
+    Navigator.of(context).pop();
+    widget.onFinished?.call();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Widget _buildResultIndicator(BuildContext context) {
+    const width = 32.0;
+    const height = 32.0;
+    if (_snapshot.hasData) {
+      return const SizedBox(
+        width: width,
+        height: height,
+        child: Icon(Icons.check_rounded, color: Colors.green),
+      );
+    } else if (_snapshot.hasError) {
+      return Tooltip(
+        message: _snapshot.error.toString(),
+        child: const SizedBox(
+          width: width,
+          height: height,
+          child: Icon(Icons.error_outline_rounded, color: Colors.red),
+        ),
+      );
+    }
+    return const SizedBox(width: width, height: height);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    const title = Text("Edit cell value", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
+
+    final textEdit = TextField(
+      textAlign: TextAlign.left,
+      textAlignVertical: TextAlignVertical.top,
+      style: const TextStyle(fontSize: 13, fontFamily: "CascadiaCode"),
+      expands: true,
+      maxLines: null,
+      controller: _controller,
+      decoration: InputDecoration(
+        border: OutlineInputBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(6)),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        contentPadding: const EdgeInsets.all(2),
+      ),
+    );
+
+    final result = _buildResultIndicator(context);
+
+    final setButton = OutlinedButton(onPressed: _set, child: const Text("Set"));
+
+    final closeButton = OutlinedButton(
+      onPressed: _close,
+      child: const Text("Close"),
+    );
+
+    return Dialog(
+      child: FractionallySizedBox(
+        widthFactor: 0.66,
+        heightFactor: 0.60,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          child: Column(
+            children: [
+              const Center(child: title),
+              const SizedBox(height: 6),
+              Expanded(child: textEdit),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  result,
+                  const SizedBox(width: 6),
+                  setButton,
+                  const SizedBox(width: 6),
+                  closeButton,
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ValueTableCell extends StatefulWidget {
+  const ValueTableCell(
+    this.encryptedDevice,
+    this.securityProvider,
     this.object,
     this.column,
     this.type, {
@@ -117,20 +265,20 @@ class CellLinkedTextField extends StatefulWidget {
 
   final EncryptedDevice encryptedDevice;
   final UID securityProvider;
-  final UID table;
   final UID object;
   final int column;
   final Type type;
 
   @override
-  State<StatefulWidget> createState() => _CellLinkedTextFieldState();
+  State<StatefulWidget> createState() => _ValueTableCellState();
 }
 
-class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
+class _ValueTableCellState extends State<ValueTableCell> {
   var getSnapshot = const AsyncSnapshot<String>.waiting();
   var setSnapshot = const AsyncSnapshot<bool>.waiting();
   Request<void>? getRequest;
   Request<void>? setRequest;
+  final _controller = TextEditingController();
 
   @override
   void initState() {
@@ -144,6 +292,7 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
     setRequest?.future.ignore();
     getRequest?.cancel();
     setRequest?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -171,11 +320,11 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
   Future<void> _getValue() async {
     try {
       final value = await widget.encryptedDevice.getObjectColumn(
-        widget.table,
         widget.object,
         widget.column,
       );
-      final rendered = widget.encryptedDevice.renderValue(value, widget.type, widget.securityProvider);
+      final rendered =
+          value.hasValue ? widget.encryptedDevice.renderValue(value, widget.type, widget.securityProvider) : "";
       setState(() {
         getSnapshot = AsyncSnapshot<String>.withData(ConnectionState.done, rendered);
       });
@@ -189,9 +338,10 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
   Future<void> _setValue(String value) async {
     try {
       final parsed = widget.encryptedDevice.parseValue(value, widget.type, widget.securityProvider);
-      await widget.encryptedDevice.setObjectColumn(widget.table, widget.object, widget.column, parsed);
+      await widget.encryptedDevice.setObjectColumn(widget.object, widget.column, parsed);
       setState(() {
-        getSnapshot = AsyncSnapshot<String>.withData(ConnectionState.done, value);
+        getRequest?.cancel();
+        getRequest = request(_getValue);
         setSnapshot = const AsyncSnapshot<bool>.withData(ConnectionState.done, true);
       });
     } catch (ex) {
@@ -202,23 +352,43 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
     }
   }
 
+  Widget _buildExpandable(BuildContext context, {required String initialValue, required Widget child}) {
+    return GestureDetector(
+      child: child,
+      onDoubleTap: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return CellEditDialog(
+              widget.encryptedDevice,
+              widget.securityProvider,
+              widget.object,
+              widget.column,
+              widget.type,
+              initialValue,
+              onFinished: () {
+                setState(() {
+                  getRequest?.cancel();
+                  getRequest = request(_getValue);
+                });
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildContentWithData(BuildContext context, String data) {
-    final colorScheme = Theme.of(context).colorScheme;
+    _controller.text = data;
 
-    final textColor = setSnapshot.hasData
-        ? Colors.green
-        : setSnapshot.hasError
-            ? colorScheme.error
-            : colorScheme.onBackground;
-
-    final textField = TextField(
-      style: TextStyle(color: textColor),
+    return TextField(
       textAlign: TextAlign.left,
       textAlignVertical: TextAlignVertical.center,
       autocorrect: false,
       readOnly: false,
       maxLines: 1,
-      controller: TextEditingController(text: data),
+      controller: _controller,
       decoration: const InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide.none),
         contentPadding: EdgeInsets.all(0),
@@ -231,17 +401,12 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
         });
       },
     );
-
-    return textField;
   }
 
   Widget _buildContentWithError(Object error) {
     return Tooltip(
       message: error.toString(),
-      child: const Text(
-        "Error",
-        style: TextStyle(fontStyle: FontStyle.italic),
-      ),
+      child: const SizedBox(width: 14, height: 14, child: Icon(Icons.error_rounded)),
     );
   }
 
@@ -259,9 +424,11 @@ class _CellLinkedTextFieldState extends State<CellLinkedTextField> {
   Widget build(BuildContext context) {
     Widget? content;
     if (getSnapshot.hasData) {
-      content = _buildContentWithData(context, getSnapshot.data!);
+      final child = _buildContentWithData(context, getSnapshot.data!);
+      content = _buildExpandable(context, initialValue: getSnapshot.data!, child: child);
     } else if (getSnapshot.hasError) {
-      content = _buildContentWithError(getSnapshot.error!);
+      final child = _buildContentWithError(getSnapshot.error!);
+      content = _buildExpandable(context, initialValue: "", child: child);
     } else {
       content = _buildContentWaiting();
     }
@@ -314,10 +481,9 @@ class TableView extends StatelessWidget {
     }
 
     Widget valueBuilder(columnIdx, rowIdx) {
-      return CellLinkedTextField(
+      return ValueTableCell(
         encryptedDevice,
         securityProvider,
-        table,
         rows[rowIdx],
         columnIdx + 1,
         columns[columnIdx + 1].type,

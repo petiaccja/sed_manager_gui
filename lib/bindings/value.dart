@@ -24,4 +24,8 @@ class Value implements Finalizable {
   Pointer<CValue> handle() {
     return _handle;
   }
+
+  bool get hasValue {
+    return _capi.valueHasValue(_handle);
+  }
 }

@@ -37,19 +37,17 @@ class EncryptedDevice {
     return futureWrapper.toDartFuture();
   }
 
-  Future<String?> findName(UID uid, {UID securityProvider = 0}) {
+  Future<String> findName(UID uid, {UID securityProvider = 0}) {
     final futurePtr = _capi.encryptedDeviceFindName(_handle, uid, securityProvider);
     final futureWrapper = FutureWrapperString(futurePtr);
-    final future = futureWrapper.toDartFuture();
-    return future.then((value) async => value.isNotEmpty ? value : null);
+    return futureWrapper.toDartFuture();
   }
 
-  Future<UID?> findUid(String name, {UID securityProvider = 0}) {
+  Future<UID> findUid(String name, {UID securityProvider = 0}) {
     final nameWrapper = StringWrapper.fromString(name);
     final futurePtr = _capi.encryptedDeviceFindUID(_handle, nameWrapper.handle(), securityProvider);
     final futureWrapper = FutureWrapperUID(futurePtr);
-    final future = futureWrapper.toDartFuture();
-    return future.then((value) async => value != 0 ? value : null);
+    return futureWrapper.toDartFuture();
   }
 
   Stream<UID> getTableRows(UID tableUid) {
@@ -70,13 +68,13 @@ class EncryptedDevice {
     return Type(_capi.encryptedDeviceGetColumnType(_handle, table, column));
   }
 
-  Future<Value> getObjectColumn(UID tableUid, UID objectUid, int column) {
+  Future<Value> getObjectColumn(UID objectUid, int column) {
     final futurePtr = _capi.encryptedDeviceGetObjectColumn(_handle, objectUid, column);
     final futureWrapper = FutureWrapperValue(futurePtr);
     return futureWrapper.toDartFuture();
   }
 
-  Future<void> setObjectColumn(UID tableUid, UID objectUid, int column, Value value) {
+  Future<void> setObjectColumn(UID objectUid, int column, Value value) {
     final futurePtr = _capi.encryptedDeviceSetObjectColumn(_handle, objectUid, column, value.handle());
     final futureWrapper = FutureWrapperVoid(futurePtr);
     return futureWrapper.toDartFuture();
