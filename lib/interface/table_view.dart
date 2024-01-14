@@ -23,22 +23,14 @@ class TableCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final border = fill
-        ? Border.symmetric(
-            vertical: BorderSide(
-              color: colorScheme.outlineVariant,
-            ),
-          )
-        : Border.all(
-            color: colorScheme.outline,
-          );
+    final border = Border.all(color: colorScheme.outline);
 
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
         border: border,
-        color: fill ? colorScheme.primary : null,
+        color: fill ? colorScheme.secondary : null,
       ),
       child: Container(
         margin: const EdgeInsets.all(2),
@@ -112,7 +104,7 @@ class UIDTableCell extends StatelessWidget {
 }
 
 class CellEditDialog extends StatefulWidget {
-  CellEditDialog(
+  const CellEditDialog(
     this.encryptedDevice,
     this.securityProvider,
     this.object,
@@ -128,8 +120,8 @@ class CellEditDialog extends StatefulWidget {
   final UID object;
   final int column;
   final Type type;
-  String initialValue;
-  void Function()? onFinished;
+  final String initialValue;
+  final void Function()? onFinished;
 
   @override
   State<CellEditDialog> createState() => _CellEditDialogState();

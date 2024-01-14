@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sed_manager_gui/bindings/errors.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
 import 'package:sed_manager_gui/interface/table_view.dart';
 import "encrypted_device_builder.dart";
 import "session_builder.dart";
+import "tools_view.dart";
 
 class SecurityProviderDropdown extends StatelessWidget {
   SecurityProviderDropdown(this.encryptedDevice, {this.onSelected, super.key});
@@ -255,6 +255,8 @@ class TableEditorPage extends StatelessWidget {
             },
           ),
         ),
+        const SizedBox(width: 12),
+        ToolsView(encryptedDevice, securityProvider),
       ],
     );
   }
