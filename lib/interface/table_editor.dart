@@ -138,8 +138,15 @@ class TableListView extends StatelessWidget {
 
     final header = Container(
       margin: const EdgeInsets.all(6),
-      child: const Center(
-        child: Text("Tables", style: TextStyle(fontSize: 18)),
+      child: Center(
+        child: Text(
+          "Tables",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
       ),
     );
 

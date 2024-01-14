@@ -3,7 +3,7 @@ import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
 
 class AuthneticateDialog extends StatelessWidget {
-  const AuthneticateDialog(
+  AuthneticateDialog(
     this.encryptedDevice,
     this.securityProvider, {
     super.key,
@@ -11,16 +11,80 @@ class AuthneticateDialog extends StatelessWidget {
 
   final EncryptedDevice encryptedDevice;
   final UID securityProvider;
+  late final _authorities = request(_getAuthorities);
+  final _authorityController = SearchController();
+  final _passwordController = TextEditingController();
+
+  Future<List<(UID, String)>> _getAuthorities() async {
+    return <(UID, String)>[
+      (1, "Auth1"),
+      (2, "Auth2"),
+    ];
+  }
+
+  Widget _buildWithData(BuildContext context, List<(UID, String)> data) {
+    final items = data.map((sp) {
+      return DropdownMenuEntry<int>(value: sp.$1, label: sp.$2);
+    }).toList();
+    return SizedBox(
+      width: 280,
+      child: Column(
+        children: [
+          DropdownMenu(
+            width: 280,
+            dropdownMenuEntries: items,
+            label: const Text("Select authority"),
+            controller: _authorityController,
+          ),
+          const SizedBox(height: 6),
+          TextField(obscureText: true, controller: _passwordController),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: FilledButton(onPressed: () {}, child: const Text("Authenticate")),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                flex: 1,
+                child: FilledButton(onPressed: () {}, child: const Text("Back")),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWithError(BuildContext context, Object error) {
+    return Text(error.toString());
+  }
+
+  Widget _buildWaiting() {
+    return const Center(child: SizedBox(width: 48, height: 48, child: CircularProgressIndicator()));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Dialog.fullscreen(
+    return Dialog.fullscreen(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text("Authenticate", style: TextStyle(fontSize: 18)),
-          Text("Coming soon..."),
+          const Text("Authenticate", style: TextStyle(fontSize: 18)),
+          const SizedBox(height: 6),
+          RequestBuilder(
+            request: _authorities,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return _buildWithData(context, snapshot.data!);
+              } else if (snapshot.hasError) {
+                return _buildWithError(context, snapshot.error!);
+              }
+              return _buildWaiting();
+            },
+          ),
         ],
       ),
     );

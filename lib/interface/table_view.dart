@@ -23,7 +23,7 @@ class TableCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final border = Border.all(color: colorScheme.outline);
+    final border = Border.all(color: colorScheme.outlineVariant);
 
     return Container(
       width: double.infinity,
