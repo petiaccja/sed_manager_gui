@@ -1,5 +1,7 @@
 import 'dart:core';
 import 'dart:ffi';
+import 'package:ffi/ffi.dart';
+
 import 'future.dart';
 import 'storage_device.dart';
 import 'string.dart';
@@ -76,6 +78,21 @@ class EncryptedDevice {
 
   Future<void> setObjectColumn(UID objectUid, int column, Value value) {
     final futurePtr = _capi.encryptedDeviceSetObjectColumn(_handle, objectUid, column, value.handle());
+    final futureWrapper = FutureWrapperVoid(futurePtr);
+    return futureWrapper.toDartFuture();
+  }
+
+  Future<void> authenticate(UID authority, String? password) {
+    final bytes = password?.toNativeUtf8();
+    final futurePtr = _capi.encryptedDeviceAuthenticate(
+      _handle,
+      authority,
+      bytes?.cast<Uint8>() ?? nullptr,
+      bytes?.length ?? 0,
+    );
+    if (bytes != null) {
+      malloc.free(bytes);
+    }
     final futureWrapper = FutureWrapperVoid(futurePtr);
     return futureWrapper.toDartFuture();
   }

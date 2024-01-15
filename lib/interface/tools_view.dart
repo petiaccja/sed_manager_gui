@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
@@ -14,12 +16,31 @@ class AuthneticateDialog extends StatelessWidget {
   late final _authorities = request(_getAuthorities);
   final _authorityController = SearchController();
   final _passwordController = TextEditingController();
+  final _resultController = StreamController<void>();
 
   Future<List<(UID, String)>> _getAuthorities() async {
-    return <(UID, String)>[
-      (1, "Auth1"),
-      (2, "Auth2"),
-    ];
+    final authorityTable = await encryptedDevice.findUid("Authority");
+    final allAuthorities = await encryptedDevice.getTableRows(authorityTable).toList();
+    final authoritiesWithNames = <(UID, String)>[];
+    for (final authority in allAuthorities) {
+      try {
+        final name = await encryptedDevice.findName(authority, securityProvider: securityProvider);
+        authoritiesWithNames.add((authority, name));
+      } catch (ex) {
+        authoritiesWithNames.add((authority, authority.toRadixString(16).padLeft(16, '0')));
+      }
+    }
+    return authoritiesWithNames;
+  }
+
+  void _onAuthenticate() {
+    request(() async {
+      await encryptedDevice.authenticate(_authorityController.value, _passwordController.text);
+    });
+  }
+
+  void _onBack(BuildContext context) {
+    Navigator.of(context).pop();
   }
 
   Widget _buildWithData(BuildContext context, List<(UID, String)> data) {
@@ -43,12 +64,20 @@ class AuthneticateDialog extends StatelessWidget {
             children: [
               Expanded(
                 flex: 1,
-                child: FilledButton(onPressed: () {}, child: const Text("Authenticate")),
+                child: FilledButton(
+                  onPressed: _onAuthenticate,
+                  child: const Text("Authenticate"),
+                ),
               ),
               const SizedBox(width: 6),
               Expanded(
                 flex: 1,
-                child: FilledButton(onPressed: () {}, child: const Text("Back")),
+                child: FilledButton(
+                  onPressed: () {
+                    _onBack(context);
+                  },
+                  child: const Text("Back"),
+                ),
               ),
             ],
           )

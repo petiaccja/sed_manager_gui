@@ -28,4 +28,15 @@ class Value implements Finalizable {
   bool get hasValue {
     return _capi.valueHasValue(_handle);
   }
+
+  bool get isInteger {
+    return _capi.valueIsInteger(_handle);
+  }
+
+  int getInteger() {
+    if (isInteger) {
+      return _capi.valueGetInteger(_handle);
+    }
+    throw SEDException("value is not an integer");
+  }
 }

@@ -286,8 +286,8 @@ class SEDManagerCAPI {
   );
 
   final encryptedDeviceAuthenticate = dylib.lookupFunction<
-      Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, CUID, Pointer<CString>),
-      Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, int, Pointer<CString>)>(
+      Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, CUID, Pointer<Uint8>, Size),
+      Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, int, Pointer<Uint8>, int)>(
     "CEncryptedDevice_Authenticate",
     isLeaf: true,
   );
