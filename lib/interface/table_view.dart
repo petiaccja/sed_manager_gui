@@ -8,6 +8,7 @@ import 'package:sed_manager_gui/interface/request_queue.dart';
 import 'package:table_sticky_headers/table_sticky_headers.dart';
 import 'package:sed_manager_gui/bindings/value.dart';
 import 'package:sed_manager_gui/bindings/type.dart';
+import 'error_strip.dart';
 
 class TableCell extends StatelessWidget {
   const TableCell({
@@ -162,28 +163,6 @@ class _CellEditDialogState extends State<CellEditDialog> {
     super.dispose();
   }
 
-  Widget _buildResultIndicator(BuildContext context) {
-    const width = 32.0;
-    const height = 32.0;
-    if (_snapshot.hasData) {
-      return const SizedBox(
-        width: width,
-        height: height,
-        child: Icon(Icons.check_rounded, color: Colors.green),
-      );
-    } else if (_snapshot.hasError) {
-      return Tooltip(
-        message: _snapshot.error.toString(),
-        child: const SizedBox(
-          width: width,
-          height: height,
-          child: Icon(Icons.error_outline_rounded, color: Colors.red),
-        ),
-      );
-    }
-    return const SizedBox(width: width, height: height);
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -206,7 +185,11 @@ class _CellEditDialogState extends State<CellEditDialog> {
       ),
     );
 
-    final result = _buildResultIndicator(context);
+    final errorStrip = _snapshot.hasData
+        ? const ErrorStrip.success()
+        : _snapshot.hasError
+            ? ErrorStrip.error(_snapshot.error!)
+            : const ErrorStrip.nothing();
 
     final setButton = OutlinedButton(onPressed: _set, child: const Text("Set"));
 
@@ -230,7 +213,7 @@ class _CellEditDialogState extends State<CellEditDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  result,
+                  Expanded(child: errorStrip),
                   const SizedBox(width: 6),
                   setButton,
                   const SizedBox(width: 6),

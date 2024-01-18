@@ -12,7 +12,7 @@ class SessionBuilder extends StatefulWidget {
   });
   final EncryptedDevice encryptedDevice;
   final UID securityProvider;
-  final Widget Function(BuildContext, EncryptedDevice, UID) builder;
+  final Widget Function(BuildContext context, EncryptedDevice encryptedDevice, UID securityProvider) builder;
 
   @override
   State<SessionBuilder> createState() => _SessionBuilderState();
