@@ -45,7 +45,7 @@ class RowDropdown extends StatelessWidget {
       final include = rowFilter != null ? await rowFilter!(row, _encryptedDevice, securityProvider) : true;
       if (include) {
         try {
-          rows.add((row, await _encryptedDevice.findName(row)));
+          rows.add((row, await _encryptedDevice.findName(row, securityProvider: securityProvider ?? 0)));
         } catch (ex) {
           rows.add((row, row.toRadixString(16).padLeft(16, '0')));
         }
@@ -58,20 +58,12 @@ class RowDropdown extends StatelessWidget {
     final items = securityProviders.map((sp) {
       return DropdownMenuEntry<int>(value: sp.$1, label: sp.$2);
     }).toList();
-
-    if (securityProviders.isEmpty) {
-      return DropdownMenu(
-        dropdownMenuEntries: const [],
-        enabled: false,
-        hintText: "Empty",
-        width: width,
-      );
-    }
+    
     return DropdownMenu(
       onSelected: (int? value) => onSelected?.call(value!),
       dropdownMenuEntries: items,
       controller: SearchController(),
-      hintText: hintText,
+      hintText: securityProviders.isNotEmpty ? hintText : "Empty",
       width: width,
     );
   }
@@ -81,7 +73,7 @@ class RowDropdown extends StatelessWidget {
       message: error.toString(),
       child: DropdownMenu(
         dropdownMenuEntries: const [],
-        hintText: "Error!",
+        hintText: "Error",
         enabled: false,
         width: width,
       ),

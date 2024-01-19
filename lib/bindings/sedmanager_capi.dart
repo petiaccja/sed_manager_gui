@@ -132,7 +132,7 @@ class SEDManagerCAPI {
   );
 
   final valueGetBytes =
-      dylib.lookupFunction<Pointer<Int8> Function(Pointer<CValue>), Pointer<Int8> Function(Pointer<CValue>)>(
+      dylib.lookupFunction<Pointer<Uint8> Function(Pointer<CValue>), Pointer<Uint8> Function(Pointer<CValue>)>(
     "CValue_GetBytes",
     isLeaf: true,
   );
@@ -170,8 +170,8 @@ class SEDManagerCAPI {
     isLeaf: true,
   );
 
-  final valueSetBytes = dylib.lookupFunction<Void Function(Pointer<CValue>, Pointer<Int8>, Size),
-      void Function(Pointer<CValue>, Pointer<Int8>, int)>(
+  final valueSetBytes = dylib.lookupFunction<Void Function(Pointer<CValue>, Pointer<Uint8>, Size),
+      void Function(Pointer<CValue>, Pointer<Uint8>, int)>(
     "CValue_SetBytes",
     isLeaf: true,
   );
@@ -182,8 +182,8 @@ class SEDManagerCAPI {
     isLeaf: true,
   );
 
-  final valueSetInteger = dylib.lookupFunction<Void Function(Pointer<CValue>, Int64, Bool, Uint8),
-      void Function(Pointer<CValue>, int, bool, int)>(
+  final valueSetInteger = dylib.lookupFunction<Void Function(Pointer<CValue>, Int64, Uint8, Bool),
+      void Function(Pointer<CValue>, int, int, bool)>(
     "CValue_SetInteger",
     isLeaf: true,
   );
@@ -331,9 +331,8 @@ class SEDManagerCAPI {
     isLeaf: true,
   );
 
-  final encryptedDeviceGetColumnCount = dylib.lookupFunction<
-      Size Function(Pointer<CEncryptedDevice>, CUID),
-      int Function(Pointer<CEncryptedDevice>, int)>(
+  final encryptedDeviceGetColumnCount = dylib
+      .lookupFunction<Size Function(Pointer<CEncryptedDevice>, CUID), int Function(Pointer<CEncryptedDevice>, int)>(
     "CEncryptedDevice_GetColumnCount",
     isLeaf: true,
   );
@@ -352,17 +351,17 @@ class SEDManagerCAPI {
     isLeaf: true,
   );
 
-  final encryptedDeviceGetObjectColumn = dylib.lookupFunction<
+  final encryptedDeviceGetValue = dylib.lookupFunction<
       Pointer<CFutureValue> Function(Pointer<CEncryptedDevice>, CUID, Int32),
       Pointer<CFutureValue> Function(Pointer<CEncryptedDevice>, int, int)>(
-    "CEncryptedDevice_GetObjectColumn",
+    "CEncryptedDevice_GetValue",
     isLeaf: true,
   );
 
-  final encryptedDeviceSetObjectColumn = dylib.lookupFunction<
+  final encryptedDeviceSetValue = dylib.lookupFunction<
       Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, CUID, Int32, Pointer<CValue>),
       Pointer<CFutureVoid> Function(Pointer<CEncryptedDevice>, int, int, Pointer<CValue>)>(
-    "CEncryptedDevice_SetObjectColumn",
+    "CEncryptedDevice_SetValue",
     isLeaf: true,
   );
 

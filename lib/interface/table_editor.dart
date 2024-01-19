@@ -6,43 +6,60 @@ import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
 import 'package:sed_manager_gui/interface/error_strip.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
-import 'package:sed_manager_gui/interface/row_dropdown.dart';
 import 'package:sed_manager_gui/interface/table_view.dart';
 import "encrypted_device_builder.dart";
 import "session_builder.dart";
 import "tools_view.dart";
 
 class SecurityProviderDropdown extends StatelessWidget {
-  SecurityProviderDropdown(this.encryptedDevice, {this.onSelected, super.key});
+  SecurityProviderDropdown(this._encryptedDevice, {this.onSelected, super.key});
 
-  final EncryptedDevice encryptedDevice;
+  final EncryptedDevice _encryptedDevice;
   final void Function(UID)? onSelected;
-  late final _adminSp = request(() async => await encryptedDevice.findUid("SP::Admin"));
+  late final _securityProviders = request(_getSecurityProviders);
+
+  Future<List<(UID, String)>> _getSecurityProviders() async {
+    final table = await _encryptedDevice.findUid("SP");
+    final securityProvider = await _encryptedDevice.findUid("SP::Admin");
+    await _encryptedDevice.login(securityProvider);
+    try {
+      final rows = <(UID, String)>[];
+      await for (final row in _encryptedDevice.getTableRows(table)) {
+        try {
+          rows.add((row, await _encryptedDevice.findName(row, securityProvider: securityProvider)));
+        } catch (ex) {
+          rows.add((row, row.toRadixString(16).padLeft(16, '0')));
+        }
+      }
+      return rows;
+    } finally {
+      _encryptedDevice.end();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return RequestBuilder(
-      request: _adminSp,
+      request: _securityProviders,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return ErrorStrip.error(snapshot.error);
+          return FractionallySizedBox(widthFactor: 0.75, child: ErrorStrip.error(snapshot.error));
         }
         if (!snapshot.hasData) {
           return const SizedBox(width: 32, height: 32, child: CircularProgressIndicator());
         }
-        return SessionBuilder(
-          encryptedDevice,
-          snapshot.data!,
-          builder: (context, encryptedDevice, securityProvider) {
-            return RowDropdown(
-              encryptedDevice,
-              tableName: "SP",
-              securityProvider: securityProvider,
-              onSelected: (row) => onSelected?.call(row),
-              hintText: "Select security provider",
-              width: 210,
-            );
-          },
+        final securityProviders = snapshot.data!;
+
+        final items = securityProviders.map((sp) {
+          return DropdownMenuEntry<int>(value: sp.$1, label: sp.$2);
+        }).toList();
+
+        return DropdownMenu(
+          onSelected: (int? value) => onSelected?.call(value!),
+          dropdownMenuEntries: items,
+          controller: SearchController(),
+          hintText: securityProviders.isNotEmpty ? "Select security provider" : "Empty",
+          width: 220,
         );
       },
     );
@@ -191,10 +208,6 @@ class TableEditorPage extends StatelessWidget {
     securityProviderStream.add(securityProvider);
   }
 
-  static AppBar _buildAppBar(BuildContext context) {
-    return AppBar(title: const Text("Table editor"));
-  }
-
   static Stream<Set<UID>> _accumulateAuthorities(Stream<UID> authorities) async* {
     Set<UID> collection = {};
     await for (final authority in authorities) {
@@ -332,7 +345,7 @@ class TableEditorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(context),
+      appBar: AppBar(title: const Text("Table editor")),
       body: EncryptedDeviceBuilder(
         storageDevice,
         builder: (BuildContext context, EncryptedDevice encryptedDevice) {

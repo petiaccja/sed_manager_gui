@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import "package:sed_manager_gui/bindings/encrypted_device.dart";
 import "package:sed_manager_gui/bindings/storage_device.dart";
 import "request_queue.dart";
-import "error_popup.dart";
+import "error_strip.dart";
 
 class EncryptedDeviceBuilder extends StatefulWidget {
   const EncryptedDeviceBuilder(
@@ -42,8 +42,14 @@ class _EncryptedDeviceBuilderState extends State<EncryptedDeviceBuilder> {
   }
 
   Widget _buildWithError(Object error) {
-    var message = error.toString();
-    return ErrorPopupPage(message);
+    return Center(
+      child: FractionallySizedBox(
+        widthFactor: 0.75,
+        child: Center(
+          child: ErrorStrip.error(error.toString()),
+        ),
+      ),
+    );
   }
 
   Widget _buildWaiting() {

@@ -41,12 +41,13 @@ class ErrorStrip extends StatelessWidget {
     return SizedBox(
       height: height,
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           icon,
           const SizedBox(width: 6),
-          Expanded(child: tooltip),
+          tooltip,
         ],
       ),
     );

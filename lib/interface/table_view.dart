@@ -136,7 +136,7 @@ class _CellEditDialogState extends State<CellEditDialog> {
   Future<void> _setValue(String value) async {
     try {
       final parsed = widget.encryptedDevice.parseValue(value, widget.type, widget.securityProvider);
-      await widget.encryptedDevice.setObjectColumn(widget.object, widget.column, parsed);
+      await widget.encryptedDevice.setValue(widget.object, widget.column, parsed);
       setState(() {
         _snapshot = const AsyncSnapshot<bool>.withData(ConnectionState.done, true);
       });
@@ -294,7 +294,7 @@ class _ValueTableCellState extends State<ValueTableCell> {
 
   Future<void> _getValue() async {
     try {
-      final value = await widget.encryptedDevice.getObjectColumn(
+      final value = await widget.encryptedDevice.getValue(
         widget.object,
         widget.column,
       );
@@ -313,7 +313,7 @@ class _ValueTableCellState extends State<ValueTableCell> {
   Future<void> _setValue(String value) async {
     try {
       final parsed = widget.encryptedDevice.parseValue(value, widget.type, widget.securityProvider);
-      await widget.encryptedDevice.setObjectColumn(widget.object, widget.column, parsed);
+      await widget.encryptedDevice.setValue(widget.object, widget.column, parsed);
       setState(() {
         getRequest?.cancel();
         getRequest = request(_getValue);

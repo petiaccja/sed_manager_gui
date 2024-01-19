@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import "package:sed_manager_gui/bindings/encrypted_device.dart";
+import 'package:sed_manager_gui/interface/error_strip.dart';
 import "request_queue.dart";
 
 class SessionBuilder extends StatefulWidget {
@@ -40,7 +41,7 @@ class _SessionBuilderState extends State<SessionBuilder> {
   }
 
   Widget _buildWithError(Object error) {
-    return const Text("error");
+    return FractionallySizedBox(widthFactor: 0.75, child: ErrorStrip.error(error.toString()));
   }
 
   Widget _buildWaiting() {

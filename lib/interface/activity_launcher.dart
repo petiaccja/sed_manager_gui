@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/errors.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
+import 'package:sed_manager_gui/interface/stack_reset_page.dart';
 import 'package:sed_manager_gui/interface/table_editor.dart';
 import 'package:sed_manager_gui/interface/error_popup.dart';
 import 'unlocker.dart';
@@ -11,7 +12,7 @@ class ActivityLauncherPage extends StatelessWidget {
 
   final StorageDevice device;
 
-  void launchActivity(
+  void _launchActivity(
     BuildContext context,
     Widget Function(BuildContext) builder,
   ) {
@@ -22,74 +23,69 @@ class ActivityLauncherPage extends StatelessWidget {
     );
   }
 
-  void launchEditTables(BuildContext context) {
-    launchActivity(context, (BuildContext context) => TableEditorPage(device));
+  void _launchTableEditor(BuildContext context) {
+    _launchActivity(context, (BuildContext context) => TableEditorPage(device));
   }
 
-  void launchUnlock(BuildContext context) {
-    launchActivity(context, (BuildContext context) => UnlockerPage(device));
+  void _launchUnlocker(BuildContext context) {
+    _launchActivity(context, (BuildContext context) => UnlockerPage(device));
   }
 
-  Widget launcherButton(BuildContext context, void Function()? callback, String caption, IconData? icon) {
-    var colorScheme = Theme.of(context).colorScheme;
-    var text = Text(caption, style: const TextStyle(fontSize: 18));
-    var face = icon != null
-        ? Wrap(
-            direction: Axis.horizontal,
-            children: [Icon(icon, color: colorScheme.onPrimary), const SizedBox(width: 4), text])
-        : text;
-    return FilledButton(onPressed: callback, child: face);
+  void _launchStackReset(BuildContext context) {
+    _launchActivity(context, (BuildContext context) => StackResetPage(device));
   }
 
-  Widget launcherGroup(BuildContext context, List<(void Function()?, String, IconData?)> launchers) {
-    var buttons = launchers.map((launcher) {
-      return launcherButton(context, launcher.$1, launcher.$2, launcher.$3);
-    });
-    return Container(
-        margin: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        width: double.infinity,
-        child:
-            Wrap(alignment: WrapAlignment.start, direction: Axis.horizontal, spacing: 16, children: buttons.toList()));
+  Widget _buildIcon(BuildContext context, String caption, IconData icon, void Function()? callback) {
+    var face = Container(
+      width: 90,
+      height: 86,
+      margin: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 45,
+          ),
+          Text(caption, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+        ],
+      ),
+    );
+    final style = ButtonStyle(
+      shape: MaterialStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+    return TextButton(onPressed: callback, style: style, child: face);
   }
 
   @override
   Widget build(BuildContext context) {
-    var colorScheme = Theme.of(context).colorScheme;
+    late final String title = "${device.getName()} - ${device.getSerial()}";
 
-    late final String title = "${device.getName()} (${device.getSerial()})";
-
-    final groupExpert = launcherGroup(context, [
-      (
-        () {
-          launchEditTables(context);
-        },
-        "Edit tables",
-        Icons.table_chart
-      ),
-    ]);
-
-    final groupGuided = launcherGroup(context, [
-      (null, "Configure locking", Icons.lock),
-      (null, "Change password", Icons.password),
-      (null, "Factory reset", Icons.undo)
-    ]);
-
-    final groupPba = launcherGroup(context, [
-      (
-        () {
-          launchUnlock(context);
-        },
-        "Unlock",
-        Icons.lock_open
-      )
-    ]);
+    final icons = <Widget>[
+      _buildIcon(context, "Table editor", Icons.table_chart_outlined, () => _launchTableEditor(context)),
+      _buildIcon(context, "Locking wizard", Icons.lock_outline_rounded, null),
+      _buildIcon(context, "Unlocking wizard", Icons.lock_open_rounded, () => _launchUnlocker(context)),
+      _buildIcon(context, "Change password", Icons.password, null),
+      _buildIcon(context, "Stack reset", Icons.restart_alt_rounded, () => _launchStackReset(context)),
+      _buildIcon(context, "Factory reset", Icons.restore_page_outlined, null),
+    ];
 
     return Scaffold(
-        appBar: AppBar(title: Text(title)),
-        body: Column(children: [
-          groupExpert,
-          groupGuided,
-          groupPba,
-        ]));
+      appBar: AppBar(title: Text(title)),
+      body: Container(
+        margin: const EdgeInsets.all(12),
+        child: Wrap(
+          runSpacing: 6,
+          spacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          alignment: WrapAlignment.center,
+          direction: Axis.horizontal,
+          children: icons,
+        ),
+      ),
+    );
   }
 }

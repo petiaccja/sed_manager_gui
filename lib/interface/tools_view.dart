@@ -1,9 +1,49 @@
 import 'dart:async';
+import 'dart:ffi';
+import 'dart:typed_data';
 
+import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
+import 'package:sed_manager_gui/bindings/value.dart';
 import 'package:sed_manager_gui/interface/error_strip.dart';
 import 'package:sed_manager_gui/interface/request_queue.dart';
+import 'package:sed_manager_gui/interface/row_dropdown.dart';
+
+class ToolDialog extends StatelessWidget {
+  const ToolDialog(
+    this.title, {
+    required this.children,
+    super.key,
+  });
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final header = Text(title, style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.primary));
+
+    const separator = SizedBox(height: 6);
+    final separatedChildren = <Widget>[header];
+    for (final child in children) {
+      separatedChildren.add(separator);
+      separatedChildren.add(child);
+    }
+
+    return Dialog(
+      child: Container(
+        margin: const EdgeInsets.all(8),
+        width: 280,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: separatedChildren,
+        ),
+      ),
+    );
+  }
+}
 
 class AuthneticateDialog extends StatefulWidget {
   const AuthneticateDialog(
@@ -18,58 +58,35 @@ class AuthneticateDialog extends StatefulWidget {
   final void Function(UID authority)? onAuthenticated;
 
   @override
-  State<AuthneticateDialog> createState() => _AuthneticateDialogState();
+  State<AuthneticateDialog> createState() => _AuthenticateDialogState();
 }
 
-class _AuthneticateDialogState extends State<AuthneticateDialog> {
-  late final _authorities = request(_getAuthorities);
-
-  final _authorityController = SearchController();
+class _AuthenticateDialogState extends State<AuthneticateDialog> {
   final _passwordController = TextEditingController();
   int? _selectedAuthority;
-  var _result = const AsyncSnapshot<bool>.nothing();
+  var _result = const AsyncSnapshot<void>.nothing();
 
   @override
   void dispose() {
-    _authorityController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  Future<List<(UID, String)>> _getAuthorities() async {
-    final authorityTable = await widget.encryptedDevice.findUid("Authority");
-    final allAuthorities = await widget.encryptedDevice.getTableRows(authorityTable).toList();
-    final authoritiesWithNames = <(UID, String)>[];
-    for (final authority in allAuthorities) {
-      try {
-        final name = await widget.encryptedDevice.findName(authority, securityProvider: widget.securityProvider);
-        authoritiesWithNames.add((authority, name));
-      } catch (ex) {
-        authoritiesWithNames.add((authority, authority.toRadixString(16).padLeft(16, '0')));
-      }
-    }
-    return authoritiesWithNames;
-  }
-
   void _onAuthenticate() {
     request(() async {
-      if (_selectedAuthority == null) {
-        setState(() {
-          _result = const AsyncSnapshot<bool>.withError(ConnectionState.done, "Select an authority!");
-        });
-      } else {
+      var result = const AsyncSnapshot<void>.withError(ConnectionState.done, "Select an authority!");
+      if (_selectedAuthority != null) {
         try {
           await widget.encryptedDevice.authenticate(_selectedAuthority!, _passwordController.text);
-          setState(() {
-            _result = const AsyncSnapshot<bool>.withData(ConnectionState.done, true);
-            widget.onAuthenticated?.call(_selectedAuthority!);
-          });
+          result = const AsyncSnapshot<void>.withData(ConnectionState.done, null);
+          widget.onAuthenticated?.call(_selectedAuthority!);
         } catch (ex) {
-          setState(() {
-            _result = AsyncSnapshot<bool>.withError(ConnectionState.done, ex);
-          });
+          result = AsyncSnapshot<void>.withError(ConnectionState.done, ex);
         }
       }
+      setState(() {
+        _result = result;
+      });
     });
   }
 
@@ -77,103 +94,60 @@ class _AuthneticateDialogState extends State<AuthneticateDialog> {
     Navigator.of(context).pop();
   }
 
-  Widget _buildWithData(BuildContext context, List<(UID, String)> data) {
-    final authorityItems = data.map((sp) {
-      return DropdownMenuEntry<int>(value: sp.$1, label: sp.$2);
-    }).toList();
-
-    final authoritySelector = DropdownMenu(
-      width: 280,
-      dropdownMenuEntries: authorityItems,
-      label: const Text("Select authority"),
-      controller: _authorityController,
-      onSelected: (value) {
-        setState(() {
-          _selectedAuthority = value;
-        });
-      },
-    );
-
-    final passwordField = TextField(obscureText: true, controller: _passwordController);
-
-    final authenticateButton = FilledButton(
-      onPressed: _onAuthenticate,
-      child: const Text("Authenticate"),
-    );
-
-    final backButton = FilledButton(
-      onPressed: () {
-        _onBack(context);
-      },
-      child: const Text("Back"),
-    );
-
-    final errorStrip = _result.hasData
-        ? const ErrorStrip.success()
-        : _result.hasError
-            ? ErrorStrip.error(_result.error!)
-            : const ErrorStrip.nothing();
-
-    return SizedBox(
-      width: 280,
-      child: Column(
-        children: [
-          authoritySelector,
-          const SizedBox(height: 6),
-          passwordField,
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(flex: 1, child: authenticateButton),
-              const SizedBox(width: 6),
-              Expanded(flex: 1, child: backButton),
-            ],
-          ),
-          const SizedBox(height: 6),
-          errorStrip,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWithError(BuildContext context, Object error) {
-    return Text(error.toString());
-  }
-
-  Widget _buildWaiting() {
-    return const Center(child: SizedBox(width: 48, height: 48, child: CircularProgressIndicator()));
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: Container(
-          margin: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Authenticate", style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 6),
-              RequestBuilder(
-                request: _authorities,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return _buildWithData(context, snapshot.data!);
-                  } else if (snapshot.hasError) {
-                    return _buildWithError(context, snapshot.error!);
-                  }
-                  return _buildWaiting();
-                },
-              ),
-            ],
-          )),
+    final authoritySelector = RowDropdown(
+      widget.encryptedDevice,
+      tableName: "Authority",
+      securityProvider: widget.securityProvider,
+      onSelected: (authority) {
+        setState(() {
+          _selectedAuthority = authority;
+        });
+      },
+      hintText: "Select authority",
+      width: 280,
     );
+
+    final passwordField = TextField(
+      obscureText: true,
+      controller: _passwordController,
+      decoration: const InputDecoration(hintText: "Password"),
+    );
+
+    final buttonStrip = Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: _onAuthenticate,
+            child: const Text("Authenticate"),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: () {
+              _onBack(context);
+            },
+            child: const Text("Back"),
+          ),
+        ),
+      ],
+    );
+
+    final errorStrip = _result.hasError
+        ? ErrorStrip.error(_result.error!)
+        : _result.connectionState == ConnectionState.done
+            ? const ErrorStrip.success()
+            : const ErrorStrip.nothing();
+
+    return ToolDialog("Authenticate", children: [authoritySelector, passwordField, buttonStrip, errorStrip]);
   }
 }
 
-class PasswordDialog extends StatelessWidget {
+class PasswordDialog extends StatefulWidget {
   const PasswordDialog(
     this.encryptedDevice,
     this.securityProvider, {
@@ -184,22 +158,121 @@ class PasswordDialog extends StatelessWidget {
   final UID securityProvider;
 
   @override
+  State<PasswordDialog> createState() => _PasswordDialogState();
+}
+
+class _PasswordDialogState extends State<PasswordDialog> {
+  final _passwordController = TextEditingController();
+  final _repeatController = TextEditingController();
+  int? _selectedAuthority;
+  var _result = const AsyncSnapshot<void>.waiting();
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _onAuthenticate() {
+    request(() async {
+      var result = const AsyncSnapshot<void>.withError(ConnectionState.done, "Select an authority!");
+      if (_selectedAuthority != null) {
+        if (_passwordController.text == _repeatController.text) {
+          try {
+            final credential = await widget.encryptedDevice.getValue(_selectedAuthority!, 10);
+            final credentialUid = credential.getBytes().getUint64(0);
+            final ptr = _passwordController.text.toNativeUtf8();
+            try {
+              final password = Value.bytes(ptr.cast<Uint8>().asTypedList(ptr.length).buffer.asByteData());
+              await widget.encryptedDevice.setValue(credentialUid, 3, password);
+              result = const AsyncSnapshot<void>.withData(ConnectionState.done, null);
+            } finally {
+              malloc.free(ptr);
+            }
+          } catch (ex) {
+            result = AsyncSnapshot<void>.withError(ConnectionState.done, ex);
+          }
+        } else {
+          result = const AsyncSnapshot<void>.withError(ConnectionState.done, "Passwords do not match!");
+        }
+      }
+      setState(() {
+        _result = result;
+      });
+    });
+  }
+
+  void _onBack(BuildContext context) {
+    Navigator.of(context).pop();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Dialog.fullscreen(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text("Change password", style: TextStyle(fontSize: 18)),
-          Text("Coming soon..."),
-        ],
-      ),
+    final authoritySelector = RowDropdown(
+      widget.encryptedDevice,
+      tableName: "Authority",
+      securityProvider: widget.securityProvider,
+      onSelected: (authority) {
+        setState(() {
+          _selectedAuthority = authority;
+        });
+      },
+      hintText: "Select authority",
+      width: 280,
     );
+
+    final passwordField = TextField(
+      obscureText: true,
+      controller: _passwordController,
+      decoration: const InputDecoration(hintText: "Password"),
+    );
+
+    final repeatField = TextField(
+      obscureText: true,
+      controller: _repeatController,
+      decoration: const InputDecoration(hintText: "Repeat password"),
+    );
+
+    final buttonStrip = Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: _onAuthenticate,
+            child: const Text("Change"),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: () {
+              _onBack(context);
+            },
+            child: const Text("Back"),
+          ),
+        ),
+      ],
+    );
+
+    final errorStrip = _result.hasError
+        ? ErrorStrip.error(_result.error!)
+        : _result.connectionState == ConnectionState.done
+            ? const ErrorStrip.success()
+            : const ErrorStrip.nothing();
+
+    return ToolDialog("Change password", children: [
+      authoritySelector,
+      passwordField,
+      repeatField,
+      buttonStrip,
+      errorStrip,
+    ]);
   }
 }
 
-class ReplaceMEKDialog extends StatelessWidget {
-  const ReplaceMEKDialog(
+class GenerateMEKDialog extends StatefulWidget {
+  const GenerateMEKDialog(
     this.encryptedDevice,
     this.securityProvider, {
     super.key,
@@ -209,41 +282,95 @@ class ReplaceMEKDialog extends StatelessWidget {
   final UID securityProvider;
 
   @override
-  Widget build(BuildContext context) {
-    return const Dialog.fullscreen(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text("Replace media encryption key", style: TextStyle(fontSize: 18)),
-          Text("Coming soon..."),
-        ],
-      ),
-    );
-  }
+  State<GenerateMEKDialog> createState() => _GenerateMEKDialogState();
 }
 
-class ActivateDialog extends StatelessWidget {
-  const ActivateDialog(
-    this.encryptedDevice,
-    this.securityProvider, {
-    super.key,
-  });
+class _GenerateMEKDialogState extends State<GenerateMEKDialog> {
+  UID? _selectedLockingRange;
+  var _result = const AsyncSnapshot<void>.waiting();
 
-  final EncryptedDevice encryptedDevice;
-  final UID securityProvider;
+  void _onGenMEK() {
+    request(() async {
+      var result = const AsyncSnapshot<void>.withError(ConnectionState.done, "Select a locking range!");
+      if (_selectedLockingRange != null) {
+        try {
+          final activeKey = await widget.encryptedDevice.getValue(_selectedLockingRange!, 10);
+          final activeKeyUid = activeKey.getBytes().getUint64(0);
+          await widget.encryptedDevice.genMEK(activeKeyUid);
+          result = const AsyncSnapshot<void>.withData(ConnectionState.done, null);
+        } catch (ex) {
+          result = AsyncSnapshot<void>.withError(ConnectionState.done, ex);
+        }
+      }
+      setState(() {
+        _result = result;
+      });
+    });
+  }
+
+  void _onBack(BuildContext context) {
+    Navigator.of(context).pop();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Dialog.fullscreen(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text("Activate security provider", style: TextStyle(fontSize: 18)),
-          Text("Coming soon..."),
-        ],
-      ),
+    final authoritySelector = RowDropdown(
+      widget.encryptedDevice,
+      tableName: "Locking",
+      securityProvider: widget.securityProvider,
+      onSelected: (lockingRange) {
+        setState(() {
+          _selectedLockingRange = lockingRange;
+        });
+      },
+      hintText: "Select locking range",
+      width: 280,
+    );
+
+    const warningText = Row(
+      children: [
+        Icon(Icons.warning_outlined, color: Colors.amber),
+        SizedBox(width: 6),
+        Expanded(child: Text("This will erase all data in the selected locking range!"))
+      ],
+    );
+
+    final buttonStrip = Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: _onGenMEK,
+            child: const Text("Generate"),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: () {
+              _onBack(context);
+            },
+            child: const Text("Back"),
+          ),
+        ),
+      ],
+    );
+
+    final errorStrip = _result.hasError
+        ? ErrorStrip.error(_result.error!)
+        : _result.connectionState == ConnectionState.done
+            ? const ErrorStrip.success()
+            : const ErrorStrip.nothing();
+
+    return ToolDialog(
+      "Generate media encryption key",
+      children: [
+        warningText,
+        authoritySelector,
+        buttonStrip,
+        errorStrip,
+      ],
     );
   }
 }
@@ -301,21 +428,22 @@ class ToolsView extends StatelessWidget {
       },
     );
 
+    final changePassButton = _buildButton(Icons.password, "Change password", () {
+      showDialog(context: context, builder: (context) => PasswordDialog(encryptedDevice, securityProvider));
+    });
+
+    final genMekButton = _buildButton(Icons.key, "Generate media encryption key", () {
+      showDialog(context: context, builder: (context) => GenerateMEKDialog(encryptedDevice, securityProvider));
+    });
+
     return SizedBox(
       width: 64,
       child: ListView(
         itemExtent: 70,
         children: [
           authenticateButton,
-          _buildButton(Icons.password, "Change password", () {
-            showDialog(context: context, builder: (context) => PasswordDialog(encryptedDevice, securityProvider));
-          }),
-          _buildButton(Icons.key, "Replace media encryption key", () {
-            showDialog(context: context, builder: (context) => ReplaceMEKDialog(encryptedDevice, securityProvider));
-          }),
-          _buildButton(Icons.arrow_circle_up, "Activate security provider", () {
-            showDialog(context: context, builder: (context) => ActivateDialog(encryptedDevice, securityProvider));
-          }),
+          changePassButton,
+          genMekButton,
         ],
       ),
     );

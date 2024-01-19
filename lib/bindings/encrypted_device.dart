@@ -70,14 +70,14 @@ class EncryptedDevice {
     return Type(_capi.encryptedDeviceGetColumnType(_handle, table, column));
   }
 
-  Future<Value> getObjectColumn(UID objectUid, int column) {
-    final futurePtr = _capi.encryptedDeviceGetObjectColumn(_handle, objectUid, column);
+  Future<Value> getValue(UID objectUid, int column) {
+    final futurePtr = _capi.encryptedDeviceGetValue(_handle, objectUid, column);
     final futureWrapper = FutureWrapperValue(futurePtr);
     return futureWrapper.toDartFuture();
   }
 
-  Future<void> setObjectColumn(UID objectUid, int column, Value value) {
-    final futurePtr = _capi.encryptedDeviceSetObjectColumn(_handle, objectUid, column, value.handle());
+  Future<void> setValue(UID objectUid, int column, Value value) {
+    final futurePtr = _capi.encryptedDeviceSetValue(_handle, objectUid, column, value.handle());
     final futureWrapper = FutureWrapperVoid(futurePtr);
     return futureWrapper.toDartFuture();
   }
@@ -93,6 +93,12 @@ class EncryptedDevice {
     if (bytes != null) {
       malloc.free(bytes);
     }
+    final futureWrapper = FutureWrapperVoid(futurePtr);
+    return futureWrapper.toDartFuture();
+  }
+
+  Future<void> genMEK(UID lockingRange) {
+    final futurePtr = _capi.encryptedDeviceGenMEK(_handle, lockingRange);
     final futureWrapper = FutureWrapperVoid(futurePtr);
     return futureWrapper.toDartFuture();
   }
@@ -115,5 +121,11 @@ class EncryptedDevice {
       type.handle(),
       securityProvider,
     ));
+  }
+
+  Future<void> stackReset() {
+    final futurePtr = _capi.encryptedDeviceStackReset(_handle);
+    final futureWrapper = FutureWrapperVoid(futurePtr);
+    return futureWrapper.toDartFuture();
   }
 }
