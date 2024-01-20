@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import "package:sed_manager_gui/bindings/encrypted_device.dart";
-import 'package:sed_manager_gui/interface/error_strip.dart';
-import "request_queue.dart";
+import 'package:sed_manager_gui/interface/components/result_indicator.dart';
+import 'request_queue.dart';
 
 class SessionBuilder extends StatefulWidget {
   const SessionBuilder(

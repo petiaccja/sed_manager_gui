@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
-import 'package:sed_manager_gui/interface/error_strip.dart';
-import 'package:sed_manager_gui/interface/request_queue.dart';
+import 'package:sed_manager_gui/interface/components/result_indicator.dart';
+import 'package:sed_manager_gui/interface/components/request_queue.dart';
 import 'package:sed_manager_gui/interface/table_view.dart';
-import "encrypted_device_builder.dart";
-import "session_builder.dart";
+import 'components/encrypted_device_builder.dart';
+import 'components/session_builder.dart';
 import "tools_view.dart";
 
 class SecurityProviderDropdown extends StatelessWidget {

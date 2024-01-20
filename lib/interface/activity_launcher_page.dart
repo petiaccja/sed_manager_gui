@@ -3,9 +3,8 @@ import 'package:sed_manager_gui/bindings/errors.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
 import 'package:sed_manager_gui/interface/stack_reset_page.dart';
-import 'package:sed_manager_gui/interface/table_editor.dart';
-import 'package:sed_manager_gui/interface/error_popup.dart';
-import 'unlocker.dart';
+import 'package:sed_manager_gui/interface/table_editor_page.dart';
+import 'unlock_wizard_page.dart';
 
 class ActivityLauncherPage extends StatelessWidget {
   const ActivityLauncherPage(this.device, {super.key});

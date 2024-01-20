@@ -6,9 +6,9 @@ import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/value.dart';
-import 'package:sed_manager_gui/interface/error_strip.dart';
-import 'package:sed_manager_gui/interface/request_queue.dart';
-import 'package:sed_manager_gui/interface/row_dropdown.dart';
+import 'package:sed_manager_gui/interface/components/result_indicator.dart';
+import 'package:sed_manager_gui/interface/components/request_queue.dart';
+import 'package:sed_manager_gui/interface/components/row_dropdown_view.dart';
 
 class ToolDialog extends StatelessWidget {
   const ToolDialog(

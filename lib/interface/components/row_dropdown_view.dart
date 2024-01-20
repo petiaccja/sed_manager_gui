@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
-import 'package:sed_manager_gui/interface/request_queue.dart';
+import 'package:sed_manager_gui/interface/components/request_queue.dart';
 
 class RowDropdown extends StatelessWidget {
   RowDropdown(

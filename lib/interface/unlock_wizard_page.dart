@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
-import "encrypted_device_builder.dart";
+import 'components/encrypted_device_builder.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
 
 class UnlockerPage extends StatelessWidget {

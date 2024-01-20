@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sed_manager_gui/interface/activity_launcher.dart';
-import 'package:sed_manager_gui/interface/error_strip.dart';
+import 'package:sed_manager_gui/interface/activity_launcher_page.dart';
+import 'package:sed_manager_gui/interface/components/result_indicator.dart';
 import '../bindings/storage_device.dart';
-import 'request_queue.dart';
+import 'components/request_queue.dart';
 
 class StorageDeviceProperties {
   StorageDeviceProperties(this.name, this.serial, this.firmware, this.interface, this.supportedSSCs);

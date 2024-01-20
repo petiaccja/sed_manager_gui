@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import "package:sed_manager_gui/bindings/encrypted_device.dart";
 import "package:sed_manager_gui/bindings/storage_device.dart";
-import "request_queue.dart";
-import "error_strip.dart";
+import 'request_queue.dart';
+import 'result_indicator.dart';
 
 class EncryptedDeviceBuilder extends StatefulWidget {
   const EncryptedDeviceBuilder(

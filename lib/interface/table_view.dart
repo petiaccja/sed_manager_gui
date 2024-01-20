@@ -4,11 +4,11 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
-import 'package:sed_manager_gui/interface/request_queue.dart';
+import 'package:sed_manager_gui/interface/components/request_queue.dart';
 import 'package:table_sticky_headers/table_sticky_headers.dart';
 import 'package:sed_manager_gui/bindings/value.dart';
 import 'package:sed_manager_gui/bindings/type.dart';
-import 'error_strip.dart';
+import 'components/result_indicator.dart';
 
 class TableCell extends StatelessWidget {
   const TableCell({

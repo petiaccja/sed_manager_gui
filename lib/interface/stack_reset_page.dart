@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
-import 'package:sed_manager_gui/interface/encrypted_device_builder.dart';
-import 'package:sed_manager_gui/interface/error_strip.dart';
-import 'package:sed_manager_gui/interface/request_queue.dart';
+import 'package:sed_manager_gui/interface/components/encrypted_device_builder.dart';
+import 'package:sed_manager_gui/interface/components/result_indicator.dart';
+import 'package:sed_manager_gui/interface/components/request_queue.dart';
 
 class StackResetPage extends StatelessWidget {
   StackResetPage(this.storageDevice, {super.key});
