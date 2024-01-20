@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/interface/activity_launcher.dart';
+import 'package:sed_manager_gui/interface/error_strip.dart';
 import '../bindings/storage_device.dart';
 import 'request_queue.dart';
 
@@ -35,26 +36,57 @@ class StorageDeviceCard extends StatelessWidget {
   Widget _buildCard(BuildContext context, Widget child) {
     return SizedBox(
       width: 280,
-      height: 176,
+      height: 180,
       child: Card(
         child: Container(margin: const EdgeInsets.all(8), child: child),
       ),
     );
   }
 
+  Decoration? _getDriveDataDecoration(bool? parity) {
+    if (parity != null) {
+      return BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[
+            Colors.transparent,
+            (parity ? Colors.black : Colors.white).withAlpha(12),
+            (parity ? Colors.black : Colors.white).withAlpha(12),
+            (parity ? Colors.black : Colors.white).withAlpha(12),
+            (parity ? Colors.black : Colors.white).withAlpha(12),
+            Colors.transparent,
+          ],
+        ),
+      );
+    }
+    return null;
+  }
+
+  Widget _buildDriveDataRow(String record, String value, {bool? parity}) {
+    return Container(
+      decoration: _getDriveDataDecoration(parity),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text("$record:"),
+          Text(value, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWithData(BuildContext context, StorageDeviceProperties data) {
     const titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
-    const infoStyle = TextStyle(fontSize: 14);
 
     final sscNames = data.supportedSSCs.isNotEmpty ? data.supportedSSCs.join(', ') : "-";
 
     final items = <Widget>[
       Center(child: Text(data.name, style: titleStyle)),
-      const SizedBox(height: 6),
-      Text("Serial: ${data.serial}", style: infoStyle),
-      Text("Firmware: ${data.firmware}", style: infoStyle),
-      Text("Interface: ${data.interface}", style: infoStyle),
-      Text("Encryption: $sscNames", style: infoStyle),
+      Divider(height: 11, thickness: 1, color: Theme.of(context).colorScheme.onSurface.withAlpha(48)),
+      _buildDriveDataRow("Serial", data.serial, parity: true),
+      _buildDriveDataRow("Firmware", data.firmware, parity: false),
+      _buildDriveDataRow("Encryption", sscNames, parity: true),
+      _buildDriveDataRow("Interface", data.interface, parity: false),
     ];
 
     if (data.supportedSSCs.isNotEmpty) {
@@ -80,14 +112,14 @@ class StorageDeviceCard extends StatelessWidget {
 
   Widget _buildWithError(BuildContext context, Object error) {
     const titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
-    const infoStyle = TextStyle(fontSize: 14);
 
     final name = _storageDevice.getName();
 
     final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Center(child: Text(name, style: titleStyle)),
-        Text(error.toString(), style: infoStyle),
+        Text(name, style: titleStyle),
+        Expanded(child: Center(child: ErrorStrip.error(error))),
       ],
     );
     return _buildCard(context, content);
@@ -99,9 +131,10 @@ class StorageDeviceCard extends StatelessWidget {
     final name = _storageDevice.getName();
 
     final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Center(child: Text(name, style: titleStyle)),
-        const Center(child: SizedBox(width: 48, height: 48, child: CircularProgressIndicator())),
+        Text(name, style: titleStyle),
+        const Expanded(child: Center(child: SizedBox(width: 48, height: 48, child: CircularProgressIndicator()))),
       ],
     );
     return _buildCard(context, content);
@@ -160,7 +193,7 @@ class _DriveLauncherPageState extends State<DriveLauncherPage> {
     );
 
     final body = Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(12),
       child: Wrap(
         direction: Axis.horizontal,
         spacing: 16,

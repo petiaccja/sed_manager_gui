@@ -9,44 +9,51 @@ class SEDManagerApp extends StatelessWidget {
   const SEDManagerApp({super.key});
 
   ThemeData _getTheme() {
-    const colorScheme = ColorScheme(
-      background: Color.fromARGB(255, 24, 24, 24),
+    //const accent = Color.fromARGB(255, 25, 145, 45);
+    const accent = Color.fromARGB(255, 0, 156, 204);
+    const background = Color.fromARGB(255, 24, 24, 24);
+    const foreground = Color.fromARGB(255, 220, 220, 220);
+    const errorTint = Color.fromARGB(255, 242, 16, 16);
+    const inverse = Color.fromARGB(255, 36, 138, 255);
+
+    final colorScheme = ColorScheme(
+      background: background,
       brightness: Brightness.dark,
-      error: Color.fromARGB(255, 96, 22, 22),
-      errorContainer: Color.fromARGB(255, 59, 13, 13),
-      inversePrimary: Color.fromARGB(255, 220, 220, 220),
-      inverseSurface: Color.fromARGB(255, 36, 138, 255),
-      onBackground: Color.fromARGB(255, 220, 220, 220),
-      onError: Color.fromARGB(255, 220, 220, 220),
-      onErrorContainer: Color.fromARGB(255, 220, 220, 220),
-      onInverseSurface: Color.fromARGB(255, 200, 200, 200),
-      onPrimary: Color.fromARGB(255, 240, 240, 240),
-      onPrimaryContainer: Color.fromARGB(255, 240, 240, 240),
-      onSecondary: Color.fromARGB(255, 240, 240, 240),
-      onSecondaryContainer: Color.fromARGB(255, 220, 220, 220),
-      onSurface: Color.fromARGB(255, 220, 220, 220),
-      onSurfaceVariant: Color.fromARGB(255, 220, 220, 220),
-      onTertiary: Color.fromARGB(255, 220, 220, 220),
-      onTertiaryContainer: Color.fromARGB(255, 220, 220, 220),
-      outline: Color.fromARGB(255, 25, 145, 45),
-      outlineVariant: Color.fromARGB(255, 9, 85, 22),
-      primary: Color.fromARGB(255, 25, 145, 45),
-      primaryContainer: Color.fromARGB(255, 38, 74, 44),
-      scrim: Color.fromARGB(255, 25, 145, 45),
-      secondary: Color.fromARGB(255, 9, 85, 22),
-      secondaryContainer: Color.fromARGB(255, 35, 66, 40),
-      shadow: Color.fromARGB(255, 0, 32, 0),
-      surface: Color.fromARGB(255, 48, 50, 52),
-      surfaceTint: Color.fromARGB(255, 19, 117, 182),
-      surfaceVariant: Color.fromARGB(255, 45, 73, 50),
-      tertiary: Color.fromARGB(255, 22, 61, 29),
-      tertiaryContainer: Color.fromARGB(255, 22, 61, 29),
+      error: Color.lerp(foreground, errorTint, 0.75)!,
+      errorContainer: Color.lerp(background, errorTint, 0.25)!,
+      inversePrimary: foreground,
+      inverseSurface: inverse,
+      onBackground: foreground,
+      onError: foreground,
+      onErrorContainer: foreground,
+      onInverseSurface: foreground,
+      onPrimary: Color.lerp(foreground, Colors.white, 0.5)!,
+      onPrimaryContainer: Color.lerp(foreground, Colors.white, 0.5)!,
+      onSecondary: Color.lerp(foreground, Colors.white, 0.5)!,
+      onSecondaryContainer: Color.lerp(foreground, Colors.white, 0.5)!,
+      onSurface: foreground,
+      onSurfaceVariant: foreground,
+      onTertiary: foreground,
+      onTertiaryContainer: foreground,
+      outline: Color.lerp(accent, background, 0.2)!,
+      outlineVariant: Color.lerp(accent, background, 0.5)!,
+      primary: accent,
+      primaryContainer: Color.lerp(accent, background, 0.15)!,
+      scrim: Color.lerp(accent, background, 0.15)!,
+      secondary: Color.lerp(accent, background, 0.60)!,
+      secondaryContainer: Color.lerp(accent, background, 0.68)!,
+      shadow: Colors.black,
+      surface: Color.lerp(foreground, background, 0.85)!,
+      surfaceTint: accent,
+      surfaceVariant: Color.lerp(foreground, background, 0.90)!,
+      tertiary: Color.lerp(accent, background, 0.82)!,
+      tertiaryContainer: Color.lerp(accent, background, 0.88)!,
     );
 
     return ThemeData(
       colorScheme: colorScheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.secondary,
+        backgroundColor: colorScheme.tertiary,
         foregroundColor: colorScheme.onSecondary,
       ),
       useMaterial3: true,

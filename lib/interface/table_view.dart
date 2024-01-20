@@ -31,7 +31,7 @@ class TableCell extends StatelessWidget {
       height: double.infinity,
       decoration: BoxDecoration(
         border: border,
-        color: fill ? colorScheme.secondary : null,
+        color: fill ? colorScheme.secondary : colorScheme.surface,
       ),
       child: Container(
         margin: const EdgeInsets.all(2),
