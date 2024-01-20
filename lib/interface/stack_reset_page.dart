@@ -6,7 +6,7 @@ import 'package:sed_manager_gui/interface/components/result_indicator.dart';
 import 'package:sed_manager_gui/interface/components/request_queue.dart';
 
 class StackResetPage extends StatelessWidget {
-  StackResetPage(this.storageDevice, {super.key});
+  const StackResetPage(this.storageDevice, {super.key});
   final StorageDevice storageDevice;
 
   static Future<void> _stackReset(EncryptedDevice encryptedDevice) async {

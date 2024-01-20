@@ -10,8 +10,8 @@ import 'package:sed_manager_gui/interface/components/result_indicator.dart';
 import 'package:sed_manager_gui/interface/components/request_queue.dart';
 import 'package:sed_manager_gui/interface/components/row_dropdown_view.dart';
 
-class ToolDialog extends StatelessWidget {
-  const ToolDialog(
+class TableEditorToolDialog extends StatelessWidget {
+  const TableEditorToolDialog(
     this.title, {
     required this.children,
     super.key,
@@ -143,7 +143,7 @@ class _AuthenticateDialogState extends State<AuthneticateDialog> {
             ? const ErrorStrip.success()
             : const ErrorStrip.nothing();
 
-    return ToolDialog("Authenticate", children: [authoritySelector, passwordField, buttonStrip, errorStrip]);
+    return TableEditorToolDialog("Authenticate", children: [authoritySelector, passwordField, buttonStrip, errorStrip]);
   }
 }
 
@@ -261,7 +261,7 @@ class _PasswordDialogState extends State<PasswordDialog> {
             ? const ErrorStrip.success()
             : const ErrorStrip.nothing();
 
-    return ToolDialog("Change password", children: [
+    return TableEditorToolDialog("Change password", children: [
       authoritySelector,
       passwordField,
       repeatField,
@@ -363,7 +363,7 @@ class _GenerateMEKDialogState extends State<GenerateMEKDialog> {
             ? const ErrorStrip.success()
             : const ErrorStrip.nothing();
 
-    return ToolDialog(
+    return TableEditorToolDialog(
       "Generate media encryption key",
       children: [
         warningText,
@@ -375,8 +375,8 @@ class _GenerateMEKDialogState extends State<GenerateMEKDialog> {
   }
 }
 
-class ToolsView extends StatelessWidget {
-  const ToolsView(
+class TableEditorToolsView extends StatelessWidget {
+  const TableEditorToolsView(
     this.encryptedDevice,
     this.securityProvider, {
     this.onAuthenticated,

@@ -41,8 +41,8 @@ class TableCell extends StatelessWidget {
   }
 }
 
-class HeaderTableCell extends StatelessWidget {
-  const HeaderTableCell(this.name, {super.key});
+class TableHeaderCell extends StatelessWidget {
+  const TableHeaderCell(this.name, {super.key});
 
   final String name;
 
@@ -65,8 +65,8 @@ class HeaderTableCell extends StatelessWidget {
   }
 }
 
-class UIDTableCell extends StatelessWidget {
-  UIDTableCell(
+class TableUIDCell extends StatelessWidget {
+  TableUIDCell(
     this.encryptedDevice,
     this.object,
     this.securityProvider, {
@@ -104,8 +104,8 @@ class UIDTableCell extends StatelessWidget {
   }
 }
 
-class CellEditDialog extends StatefulWidget {
-  const CellEditDialog(
+class TableCellEditDialog extends StatefulWidget {
+  const TableCellEditDialog(
     this.encryptedDevice,
     this.securityProvider,
     this.object,
@@ -125,10 +125,10 @@ class CellEditDialog extends StatefulWidget {
   final void Function()? onFinished;
 
   @override
-  State<CellEditDialog> createState() => _CellEditDialogState();
+  State<TableCellEditDialog> createState() => _TableCellEditDialogState();
 }
 
-class _CellEditDialogState extends State<CellEditDialog> {
+class _TableCellEditDialogState extends State<TableCellEditDialog> {
   var _snapshot = const AsyncSnapshot<bool>.waiting();
   Request<void>? _request;
   late final _controller = TextEditingController(text: widget.initialValue);
@@ -228,8 +228,8 @@ class _CellEditDialogState extends State<CellEditDialog> {
   }
 }
 
-class ValueTableCell extends StatefulWidget {
-  const ValueTableCell(
+class TableValueCell extends StatefulWidget {
+  const TableValueCell(
     this.encryptedDevice,
     this.securityProvider,
     this.object,
@@ -245,10 +245,10 @@ class ValueTableCell extends StatefulWidget {
   final Type type;
 
   @override
-  State<StatefulWidget> createState() => _ValueTableCellState();
+  State<StatefulWidget> createState() => _TableValueCellState();
 }
 
-class _ValueTableCellState extends State<ValueTableCell> {
+class _TableValueCellState extends State<TableValueCell> {
   var getSnapshot = const AsyncSnapshot<String>.waiting();
   var setSnapshot = const AsyncSnapshot<bool>.waiting();
   Request<void>? getRequest;
@@ -334,7 +334,7 @@ class _ValueTableCellState extends State<ValueTableCell> {
         showDialog(
           context: context,
           builder: (context) {
-            return CellEditDialog(
+            return TableCellEditDialog(
               widget.encryptedDevice,
               widget.securityProvider,
               widget.object,
@@ -417,8 +417,8 @@ class ColumnDesc {
   final Type type;
 }
 
-class TableView extends StatelessWidget {
-  TableView(
+class TableCellView extends StatelessWidget {
+  TableCellView(
     this.encryptedDevice,
     this.securityProvider,
     this.table, {
@@ -448,15 +448,15 @@ class TableView extends StatelessWidget {
     List<ColumnDesc> columns,
   ) {
     Widget headerBuilder(columnIdx) {
-      return HeaderTableCell(columns[columnIdx + 1].name);
+      return TableHeaderCell(columns[columnIdx + 1].name);
     }
 
     Widget rowBuilder(rowIdx) {
-      return UIDTableCell(encryptedDevice, rows[rowIdx], securityProvider);
+      return TableUIDCell(encryptedDevice, rows[rowIdx], securityProvider);
     }
 
     Widget valueBuilder(columnIdx, rowIdx) {
-      return ValueTableCell(
+      return TableValueCell(
         encryptedDevice,
         securityProvider,
         rows[rowIdx],

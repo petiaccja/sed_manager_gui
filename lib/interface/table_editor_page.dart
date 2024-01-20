@@ -6,10 +6,11 @@ import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
 import 'package:sed_manager_gui/interface/components/result_indicator.dart';
 import 'package:sed_manager_gui/interface/components/request_queue.dart';
-import 'package:sed_manager_gui/interface/table_view.dart';
+import 'package:sed_manager_gui/interface/table_cell_view.dart';
 import 'components/encrypted_device_builder.dart';
 import 'components/session_builder.dart';
-import "tools_view.dart";
+import 'components/cached_stream.dart';
+import 'table_editor_tools_view.dart';
 
 class SecurityProviderDropdown extends StatelessWidget {
   SecurityProviderDropdown(this._encryptedDevice, {this.onSelected, super.key});
@@ -66,8 +67,8 @@ class SecurityProviderDropdown extends StatelessWidget {
   }
 }
 
-class TableListView extends StatelessWidget {
-  TableListView(
+class TableRowListView extends StatelessWidget {
+  TableRowListView(
     this.encryptedDevice,
     this.securityProvider, {
     this.onSelected,
@@ -187,18 +188,6 @@ class TableListView extends StatelessWidget {
   }
 }
 
-class CachedStream<T> {
-  CachedStream(this.source);
-
-  final Stream<T> source;
-  T? latest;
-
-  late final stream = source.map((event) {
-    latest = event;
-    return event;
-  });
-}
-
 class TableEditorPage extends StatelessWidget {
   TableEditorPage(this.storageDevice, {super.key});
   final StorageDevice storageDevice;
@@ -263,7 +252,7 @@ class TableEditorPage extends StatelessWidget {
       },
     );
 
-    final tableListView = TableListView(
+    final tableListView = TableRowListView(
       encryptedDevice,
       securityProvider,
       onSelected: (table) {
@@ -275,7 +264,7 @@ class TableEditorPage extends StatelessWidget {
       stream: cachedTableStream.stream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return TableView(
+          return TableCellView(
             encryptedDevice,
             securityProvider,
             snapshot.data!,
@@ -285,7 +274,7 @@ class TableEditorPage extends StatelessWidget {
       },
     );
 
-    final toolsView = ToolsView(
+    final toolsView = TableEditorToolsView(
       encryptedDevice,
       securityProvider,
       onAuthenticated: (authority) {
