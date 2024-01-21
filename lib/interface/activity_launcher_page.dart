@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
+import 'package:sed_manager_gui/interface/factory_reset_wizard.dart';
 import 'package:sed_manager_gui/interface/stack_reset_page.dart';
 import 'package:sed_manager_gui/interface/table_editor_page.dart';
 import 'unlock_wizard_page.dart';
@@ -30,6 +31,10 @@ class ActivityLauncherPage extends StatelessWidget {
 
   void _launchStackReset(BuildContext context) {
     _launchActivity(context, (BuildContext context) => StackResetPage(device));
+  }
+
+  void _launchFactoryReset(BuildContext context) {
+    _launchActivity(context, (BuildContext context) => FactoryResetWizard(device));
   }
 
   Widget _buildIcon(BuildContext context, String caption, IconData icon, void Function()? callback) {
@@ -67,7 +72,7 @@ class ActivityLauncherPage extends StatelessWidget {
       _buildIcon(context, "Unlocking wizard", Icons.lock_open_rounded, () => _launchUnlocker(context)),
       _buildIcon(context, "Change password", Icons.password, null),
       _buildIcon(context, "Stack reset", Icons.restart_alt_rounded, () => _launchStackReset(context)),
-      _buildIcon(context, "Factory reset", Icons.restore_page_outlined, null),
+      _buildIcon(context, "Factory reset", Icons.restore_page_outlined, () => _launchFactoryReset(context)),
     ];
 
     return Scaffold(

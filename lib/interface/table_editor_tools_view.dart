@@ -1,7 +1,4 @@
-import 'dart:async';
 import 'dart:ffi';
-import 'dart:typed_data';
-
 import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';

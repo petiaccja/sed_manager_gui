@@ -41,18 +41,29 @@ class _SessionBuilderState extends State<SessionBuilder> {
   }
 
   Widget _buildWithError(Object error) {
-    return FractionallySizedBox(widthFactor: 0.75, child: ErrorStrip.error(error.toString()));
+    return Material(
+      child: FractionallySizedBox(
+        widthFactor: 0.75,
+        child: Center(
+          child: ErrorStrip.error(error.toString()),
+        ),
+      ),
+    );
   }
 
   Widget _buildWaiting() {
-    return const Column(children: [
-      SizedBox(
-        width: 48,
-        height: 48,
-        child: CircularProgressIndicator(),
+    return const Material(
+      child: Center(
+        child: Column(children: [
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: CircularProgressIndicator(),
+          ),
+          Text("Starting session..."),
+        ]),
       ),
-      Text("Starting session..."),
-    ]);
+    );
   }
 
   @override

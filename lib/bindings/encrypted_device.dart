@@ -128,4 +128,10 @@ class EncryptedDevice {
     final futureWrapper = FutureWrapperVoid(futurePtr);
     return futureWrapper.toDartFuture();
   }
+
+  Future<void> revert(UID securityProvider) {
+    final futurePtr = _capi.encryptedDeviceRevert(_handle, securityProvider);
+    final futureWrapper = FutureWrapperVoid(futurePtr);
+    return futureWrapper.toDartFuture();
+  }
 }

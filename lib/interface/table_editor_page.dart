@@ -320,14 +320,16 @@ class TableEditorPage extends StatelessWidget {
       },
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const SizedBox(height: 10),
-        securityProviderDropdown,
-        const SizedBox(height: 12),
-        Expanded(child: sessionPanel),
-      ],
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 10),
+          securityProviderDropdown,
+          const SizedBox(height: 12),
+          Expanded(child: sessionPanel),
+        ],
+      ),
     );
   }
 

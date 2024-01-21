@@ -12,7 +12,7 @@ class EncryptedDeviceBuilder extends StatefulWidget {
     super.key,
   });
   final StorageDevice storageDevice;
-  final Widget Function(BuildContext, EncryptedDevice) builder;
+  final Widget Function(BuildContext context, EncryptedDevice encryptedDevice) builder;
 
   @override
   State<EncryptedDeviceBuilder> createState() => _EncryptedDeviceBuilderState();
@@ -42,28 +42,32 @@ class _EncryptedDeviceBuilderState extends State<EncryptedDeviceBuilder> {
   }
 
   Widget _buildWithError(Object error) {
-    return Center(
-      child: FractionallySizedBox(
-        widthFactor: 0.75,
-        child: Center(
-          child: ErrorStrip.error(error.toString()),
+    return Material(
+      child: Center(
+        child: FractionallySizedBox(
+          widthFactor: 0.75,
+          child: Center(
+            child: ErrorStrip.error(error.toString()),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildWaiting() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: CircularProgressIndicator(),
-          ),
-          Text("Opening device..."),
-        ],
+    return const Material(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(),
+            ),
+            Text("Opening device..."),
+          ],
+        ),
       ),
     );
   }
