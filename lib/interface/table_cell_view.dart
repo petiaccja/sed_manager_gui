@@ -466,6 +466,13 @@ class TableCellView extends StatelessWidget {
       );
     }
 
+    final cellDimensions = CellDimensions.variableColumnWidth(
+      columnWidths: List<double>.filled(columns.length - 1, 120.0),
+      contentCellHeight: 26,
+      stickyLegendWidth: 256,
+      stickyLegendHeight: 26,
+    );
+
     return StickyHeadersTable(
       columnsLength: columns.length - 1,
       rowsLength: rows.length,
@@ -475,7 +482,7 @@ class TableCellView extends StatelessWidget {
       legendCell: headerBuilder(-1),
       showHorizontalScrollbar: true,
       showVerticalScrollbar: true,
-      cellDimensions: const CellDimensions.uniform(width: 112, height: 26),
+      cellDimensions: cellDimensions,
     );
   }
 

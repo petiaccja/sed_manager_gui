@@ -37,7 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   ffi: ^2.1.0
   table_sticky_headers: ^2.0.5
-  marquee: ^2.2.3
+  marquee_widget: ^1.2.0
 
 dev_dependencies:
   flutter_test:

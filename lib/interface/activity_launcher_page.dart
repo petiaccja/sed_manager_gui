@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
-import 'package:sed_manager_gui/interface/factory_reset_wizard.dart';
-import 'package:sed_manager_gui/interface/stack_reset_page.dart';
-import 'package:sed_manager_gui/interface/table_editor_page.dart';
-import 'unlock_wizard_page.dart';
+import 'factory_reset_wizard.dart';
+import 'stack_reset_page.dart';
+import 'table_editor_page.dart';
 
 class ActivityLauncherPage extends StatelessWidget {
   const ActivityLauncherPage(this.device, {super.key});
@@ -23,10 +22,6 @@ class ActivityLauncherPage extends StatelessWidget {
 
   void _launchTableEditor(BuildContext context) {
     _launchActivity(context, (BuildContext context) => TableEditorPage(device));
-  }
-
-  void _launchUnlocker(BuildContext context) {
-    _launchActivity(context, (BuildContext context) => UnlockerPage(device));
   }
 
   void _launchStackReset(BuildContext context) {
@@ -69,10 +64,9 @@ class ActivityLauncherPage extends StatelessWidget {
     final icons = <Widget>[
       _buildIcon(context, "Table editor", Icons.table_chart_outlined, () => _launchTableEditor(context)),
       _buildIcon(context, "Locking wizard", Icons.lock_outline_rounded, null),
-      _buildIcon(context, "Unlocking wizard", Icons.lock_open_rounded, () => _launchUnlocker(context)),
       _buildIcon(context, "Change password", Icons.password, null),
       _buildIcon(context, "Stack reset", Icons.restart_alt_rounded, () => _launchStackReset(context)),
-      _buildIcon(context, "Factory reset", Icons.restore_page_outlined, () => _launchFactoryReset(context)),
+      _buildIcon(context, "Factory reset", Icons.clear_rounded, () => _launchFactoryReset(context)),
     ];
 
     return Scaffold(

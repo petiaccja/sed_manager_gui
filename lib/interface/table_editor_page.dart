@@ -1,66 +1,74 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:marquee/marquee.dart';
+import 'package:marquee_widget/marquee_widget.dart';
 import 'package:sed_manager_gui/bindings/encrypted_device.dart';
 import 'package:sed_manager_gui/bindings/storage_device.dart';
-import 'package:sed_manager_gui/interface/components/result_indicator.dart';
 import 'package:sed_manager_gui/interface/components/request_queue.dart';
 import 'package:sed_manager_gui/interface/table_cell_view.dart';
 import 'components/encrypted_device_builder.dart';
 import 'components/session_builder.dart';
 import 'components/cached_stream.dart';
 import 'table_editor_tools_view.dart';
+import 'components/row_dropdown_view.dart';
 
 class SecurityProviderDropdown extends StatelessWidget {
-  SecurityProviderDropdown(this._encryptedDevice, {this.onSelected, super.key});
+  SecurityProviderDropdown(
+    this._encryptedDevice, {
+    openSession = true,
+    this.onSelected,
+    super.key,
+  }) : _refreshStream = StreamController<bool>() {
+    _refreshStream.add(openSession);
+  }
 
   final EncryptedDevice _encryptedDevice;
+  final StreamController<bool> _refreshStream;
   final void Function(UID)? onSelected;
-  late final _securityProviders = request(_getSecurityProviders);
 
-  Future<List<(UID, String)>> _getSecurityProviders() async {
-    final table = await _encryptedDevice.findUid("SP");
-    final securityProvider = await _encryptedDevice.findUid("SP::Admin");
-    await _encryptedDevice.login(securityProvider);
+  void refresh(bool openSession) {
+    _refreshStream.add(openSession);
+  }
+
+  Future<UID> _initSession(EncryptedDevice encryptedDevice) async {
+    final securityProvider = await encryptedDevice.findUid("SP::Admin");
+    await encryptedDevice.login(securityProvider);
+    return securityProvider;
+  }
+
+  Future<void> _endSession(EncryptedDevice encryptedDevice, UID securityProvider) async {
+    await encryptedDevice.end();
+  }
+
+  Future<bool> _filter(UID subjectSp, EncryptedDevice encryptedDevice, UID? sessionSp) async {
+    const issued = 0;
+    const disabled = 1;
+    const manufactured = 9;
+    const manufacturedDisabled = 10;
     try {
-      final rows = <(UID, String)>[];
-      await for (final row in _encryptedDevice.getTableRows(table)) {
-        try {
-          rows.add((row, await _encryptedDevice.findName(row, securityProvider: securityProvider)));
-        } catch (ex) {
-          rows.add((row, row.toRadixString(16).padLeft(16, '0')));
-        }
-      }
-      return rows;
-    } finally {
-      _encryptedDevice.end();
+      final lifeCycleState = (await encryptedDevice.getValue(subjectSp, 6)).getInteger();
+      final canOpenSession = <int>{issued, disabled, manufactured, manufacturedDisabled}.contains(lifeCycleState);
+      return canOpenSession;
+    } catch (ex) {
+      return true;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return RequestBuilder(
-      request: _securityProviders,
+    return StreamBuilder(
+      stream: _refreshStream.stream,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return FractionallySizedBox(widthFactor: 0.75, child: ErrorStrip.error(snapshot.error));
-        }
-        if (!snapshot.hasData) {
-          return const SizedBox(width: 32, height: 32, child: CircularProgressIndicator());
-        }
-        final securityProviders = snapshot.data!;
-
-        final items = securityProviders.map((sp) {
-          return DropdownMenuEntry<int>(value: sp.$1, label: sp.$2);
-        }).toList();
-
-        return DropdownMenu(
-          onSelected: (int? value) => onSelected?.call(value!),
-          dropdownMenuEntries: items,
-          controller: SearchController(),
-          hintText: securityProviders.isNotEmpty ? "Select security provider" : "Empty",
-          width: 220,
+        final openSession = snapshot.data ?? false;
+        return RowDropdown(
+          _encryptedDevice,
+          initSession: openSession ? _initSession : RowDropdown.byName("SP::Admin"),
+          endSession: openSession ? _endSession : null,
+          getTable: RowDropdown.byName("SP"),
+          rowFilter: _filter,
+          onSelected: (securityProvider) => onSelected?.call(securityProvider),
+          hintText: "Select locking range",
+          width: 280,
         );
       },
     );
@@ -227,8 +235,10 @@ class TableEditorPage extends StatelessWidget {
   static Widget _buildSession(
     BuildContext context,
     EncryptedDevice encryptedDevice,
-    UID securityProvider,
-  ) {
+    UID securityProvider, {
+    void Function(UID authority)? onAuthenticated,
+    void Function(UID securityProvider)? onActivated,
+  }) {
     final tableStream = StreamController<UID>();
     final cachedTableStream = CachedStream(tableStream.stream);
     final authorityStream = StreamController<UID>();
@@ -241,14 +251,8 @@ class TableEditorPage extends StatelessWidget {
     final authoritiesView = StreamBuilder(
       stream: accumulatedAuthorityStream,
       builder: (context, snapshot) {
-        final text = (snapshot.data ?? <String>["-"]).join("   ");
-        return Marquee(
-          text: "Authenticated:   $text",
-          blankSpace: 80,
-          fadingEdgeStartFraction: 0.1,
-          fadingEdgeEndFraction: 0.1,
-          crossAxisAlignment: CrossAxisAlignment.center,
-        );
+        final text = (snapshot.data ?? <String>["Anybody"]).join("   ");
+        return Marquee(child: Text(text, style: const TextStyle(color: Colors.green)));
       },
     );
 
@@ -282,6 +286,10 @@ class TableEditorPage extends StatelessWidget {
         if (cachedTableStream.latest != null) {
           tableStream.add(cachedTableStream.latest!);
         }
+        onAuthenticated?.call(authority);
+      },
+      onActivated: (securityProvider) {
+        onActivated?.call(securityProvider);
       },
     );
 
@@ -294,7 +302,7 @@ class TableEditorPage extends StatelessWidget {
             child:
                 Column(children: [Expanded(flex: 1, child: tableView), SizedBox(height: 32, child: authoritiesView)])),
         const SizedBox(width: 12),
-        toolsView,
+        Center(child: toolsView),
       ],
     );
   }
@@ -312,7 +320,14 @@ class TableEditorPage extends StatelessWidget {
           return SessionBuilder(
             encryptedDevice,
             snapshot.data!,
-            builder: _buildSession,
+            builder: (context, encryptedDevice, securityProvider) {
+              return _buildSession(
+                context,
+                encryptedDevice,
+                securityProvider,
+                onActivated: (securityProvider) => securityProviderDropdown.refresh(false),
+              );
+            },
             key: ObjectKey(snapshot.data!),
           );
         }
@@ -324,9 +339,9 @@ class TableEditorPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const SizedBox(height: 10),
+          const SizedBox(height: 7),
           securityProviderDropdown,
-          const SizedBox(height: 12),
+          const Divider(height: 13, thickness: 1, indent: 8, endIndent: 8),
           Expanded(child: sessionPanel),
         ],
       ),

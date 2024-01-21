@@ -95,8 +95,8 @@ class _AuthenticateDialogState extends State<AuthneticateDialog> {
   Widget build(BuildContext context) {
     final authoritySelector = RowDropdown(
       widget.encryptedDevice,
-      tableName: "Authority",
-      securityProvider: widget.securityProvider,
+      initSession: RowDropdown.byUid(widget.securityProvider),
+      getTable: RowDropdown.byName("Authority"),
       onSelected: (authority) {
         setState(() {
           _selectedAuthority = authority;
@@ -207,8 +207,8 @@ class _PasswordDialogState extends State<PasswordDialog> {
   Widget build(BuildContext context) {
     final authoritySelector = RowDropdown(
       widget.encryptedDevice,
-      tableName: "Authority",
-      securityProvider: widget.securityProvider,
+      initSession: RowDropdown.byUid(widget.securityProvider),
+      getTable: RowDropdown.byName("Authority"),
       onSelected: (authority) {
         setState(() {
           _selectedAuthority = authority;
@@ -313,8 +313,8 @@ class _GenerateMEKDialogState extends State<GenerateMEKDialog> {
   Widget build(BuildContext context) {
     final authoritySelector = RowDropdown(
       widget.encryptedDevice,
-      tableName: "Locking",
-      securityProvider: widget.securityProvider,
+      initSession: RowDropdown.byUid(widget.securityProvider),
+      getTable: RowDropdown.byName("Locking"),
       onSelected: (lockingRange) {
         setState(() {
           _selectedLockingRange = lockingRange;
@@ -372,19 +372,125 @@ class _GenerateMEKDialogState extends State<GenerateMEKDialog> {
   }
 }
 
+class ActivateDialog extends StatefulWidget {
+  const ActivateDialog(
+    this.encryptedDevice,
+    this.securityProvider, {
+    this.onActivated,
+    super.key,
+  });
+
+  final EncryptedDevice encryptedDevice;
+  final UID securityProvider;
+  final void Function(UID securityProvider)? onActivated;
+
+  @override
+  State<ActivateDialog> createState() => _ActivateDialogState();
+}
+
+class _ActivateDialogState extends State<ActivateDialog> {
+  int? _selectedSecurityProvider;
+  var _result = const AsyncSnapshot<void>.waiting();
+
+  void _onActivate() {
+    request(() async {
+      var result = const AsyncSnapshot<void>.withError(ConnectionState.done, "Select a security provider!");
+      if (_selectedSecurityProvider != null) {
+        try {
+          await widget.encryptedDevice.activate(_selectedSecurityProvider!);
+          widget.onActivated?.call(_selectedSecurityProvider!);
+          result = const AsyncSnapshot<void>.withData(ConnectionState.done, null);
+        } catch (ex) {
+          result = AsyncSnapshot<void>.withError(ConnectionState.done, ex);
+        }
+      }
+      setState(() {
+        _result = result;
+      });
+    });
+  }
+
+  void _onBack(BuildContext context) {
+    Navigator.of(context).pop();
+  }
+
+  Future<bool> _filter(UID subjectSp, EncryptedDevice encryptedDevice, UID? sessionSp) async {
+    try {
+      const manufacturedInactive = 8;
+      final lifeCycleState = (await encryptedDevice.getValue(subjectSp, 6)).getInteger();
+      return lifeCycleState == manufacturedInactive;
+    } catch (ex) {
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authoritySelector = RowDropdown(
+      widget.encryptedDevice,
+      initSession: RowDropdown.byUid(widget.securityProvider),
+      getTable: RowDropdown.byName("SP"),
+      rowFilter: _filter,
+      onSelected: (securityProvider) {
+        setState(() {
+          _selectedSecurityProvider = securityProvider;
+        });
+      },
+      hintText: "Select security provider",
+      width: 280,
+    );
+
+    final buttonStrip = Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: _onActivate,
+            child: const Text("Activate"),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          flex: 1,
+          child: FilledButton(
+            onPressed: () {
+              _onBack(context);
+            },
+            child: const Text("Back"),
+          ),
+        ),
+      ],
+    );
+
+    final errorStrip = _result.hasError
+        ? ErrorStrip.error(_result.error!)
+        : _result.connectionState == ConnectionState.done
+            ? const ErrorStrip.success()
+            : const ErrorStrip.nothing();
+
+    return TableEditorToolDialog("Activate security provider", children: [
+      authoritySelector,
+      buttonStrip,
+      errorStrip,
+    ]);
+  }
+}
+
 class TableEditorToolsView extends StatelessWidget {
   const TableEditorToolsView(
     this.encryptedDevice,
     this.securityProvider, {
     this.onAuthenticated,
+    this.onActivated,
     super.key,
   });
 
   final EncryptedDevice encryptedDevice;
   final UID securityProvider;
   final void Function(UID authority)? onAuthenticated;
+  final void Function(UID securityProvider)? onActivated;
 
-  Widget _buildButton(IconData icon, String title, void Function() onPressed) {
+  Widget _buildButton(IconData icon, String title, void Function()? onPressed) {
     final style = ButtonStyle(
       padding: const MaterialStatePropertyAll(EdgeInsets.all(6)),
       shape: MaterialStatePropertyAll(
@@ -410,6 +516,9 @@ class TableEditorToolsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const UID adminSpUid = 0x0000020500000001;
+    const UID lockingSpUid = 0x0000020500000002;
+
     final authenticateButton = _buildButton(
       Icons.person,
       "Authenticate",
@@ -426,21 +535,52 @@ class TableEditorToolsView extends StatelessWidget {
     );
 
     final changePassButton = _buildButton(Icons.password, "Change password", () {
-      showDialog(context: context, builder: (context) => PasswordDialog(encryptedDevice, securityProvider));
+      showDialog(
+        context: context,
+        builder: (context) => PasswordDialog(encryptedDevice, securityProvider),
+      );
     });
 
-    final genMekButton = _buildButton(Icons.key, "Generate media encryption key", () {
-      showDialog(context: context, builder: (context) => GenerateMEKDialog(encryptedDevice, securityProvider));
-    });
+    final genMekButton = _buildButton(
+      Icons.key,
+      "Generate media encryption key",
+      securityProvider != lockingSpUid
+          ? null
+          : () {
+              showDialog(
+                context: context,
+                builder: (context) => GenerateMEKDialog(encryptedDevice, securityProvider),
+              );
+            },
+    );
+
+    final activateButton = _buildButton(
+      Icons.rocket_launch,
+      "Activate security provider",
+      securityProvider != adminSpUid
+          ? null
+          : () {
+              showDialog(
+                context: context,
+                builder: (context) => ActivateDialog(
+                  encryptedDevice,
+                  securityProvider,
+                  onActivated: onActivated,
+                ),
+              );
+            },
+    );
 
     return SizedBox(
       width: 64,
       child: ListView(
+        shrinkWrap: true,
         itemExtent: 70,
         children: [
           authenticateButton,
           changePassButton,
           genMekButton,
+          activateButton,
         ],
       ),
     );
